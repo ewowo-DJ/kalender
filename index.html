@@ -785,7 +785,7 @@ function validTE(u){ return /^https:\/\/[a-z0-9.\-]*timeedit\.net\/\S+\.ics(\?\S
 function startTE(){
   if(!window.firebase) return;
   stopTE=firebase.firestore().doc("settings/timeedit").onSnapshot(function(d){
-    var v=d.exists?d.data():{}; TE.ewoud=v.ewoud||""; TE.helen=v.helen||""; TE.updated=v.updated||{}; TE.colors=v.colors||{}; TE.state="ready";
+    var v=d.exists?d.data():{}; TE.ewoud=v.ewoud||""; TE.helen=v.helen||""; TE.updated=v.updated||{}; TE.colors=v.colors||{}; TE.state="ready"; applyPersonColors();
     if(ui.ssheet) return; render();
   }, function(err){ TE.state = err&&err.code==="permission-denied" ? "denied" : "error"; render(); });
 }
@@ -815,8 +815,18 @@ function renderTESheet(){
   '</form></div>';
 }
 var TE_PRESETS=["#1e8fa6","#16707f","#2b9469","#3552d4","#8457d1","#b8457a","#d23f66","#c46a10"];
+/* Name labels (Ewoud / Helen) follow each person's chosen colour */
+function applyPersonColors(){
+  var st=document.documentElement.style;
+  [["ewoud","--ew"],["helen","--he"]].forEach(function(p){
+    var c=(TE.colors||{})[p[0]];
+    if(!c){ st.removeProperty(p[1]); st.removeProperty(p[1]+"-soft"); return; }
+    st.setProperty(p[1], "color-mix(in srgb, "+c+" 78%, var(--ink))");
+    st.setProperty(p[1]+"-soft", "color-mix(in srgb, "+c+" 22%, var(--surface))");
+  });
+}
 function setTEColor(w, hex, save){
-  TE.colors=Object.assign({}, TE.colors); TE.colors[w]=hex;
+  TE.colors=Object.assign({}, TE.colors); TE.colors[w]=hex; applyPersonColors();
   if(save && window.firebase){ var c={}; c[w]=hex; firebase.firestore().doc("settings/timeedit").set({colors:c},{merge:true}).catch(function(){ statusText="De kleur kon niet bewaard worden. Zijn de Firebase-regels bijgewerkt?"; }); }
 }
 function readTEForm(){ ["ewoud","helen"].forEach(function(w){ var e=document.getElementById("te-"+w); if(e) ui.ssheet[w]=e.value.trim(); }); }
