@@ -266,6 +266,10 @@ button{cursor:pointer}
 .item.anniv .cake{background:var(--bday);color:#fff}
 .mchip .hrt{display:inline-grid;vertical-align:-2px;margin-right:3px;color:var(--bday)} .mchip .hrt svg{width:11px;height:11px}
 .marks i.h{width:9px;height:9px;background:none;color:var(--bday);display:grid} .marks i.h svg{width:9px;height:9px}
+.now-btn{flex:none;height:38px;display:flex;align-items:center;gap:6px;padding:0 12px;border-radius:10px;border:0;background:var(--accent);color:#fff;font-weight:600;font-size:14px;white-space:nowrap}
+.now-btn svg{width:16px;height:16px}
+.now-btn[aria-current="true"]{background:var(--accent-soft);color:var(--accent)}
+@media (max-width:420px){ .now-btn{padding:0 10px;font-size:13px} .now-btn svg{display:none} }
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -687,9 +691,10 @@ function renderApp(){
     '<div class="top">'+
       '<button class="icon-btn" data-act="prev" aria-label="'+({day:"Vorige dag",week:"Vorige week",month:"Vorige maand"})[ui.view]+'">'+ICON.left+'</button>'+
       '<div class="ttl"><h1 id="ttl">'+esc(title)+'</h1><div class="sub"><span>'+esc(sub)+'</span>'+
-        (isNow?'':'<button class="back-btn" data-act="today">'+({day:"Vandaag",week:"Deze week",month:"Deze maand"})[ui.view]+'</button>')+
+
       '</div></div>'+
       '<button class="icon-btn" data-act="next" aria-label="'+({day:"Volgende dag",week:"Volgende week",month:"Volgende maand"})[ui.view]+'">'+ICON.right+'</button>'+
+      '<button class="now-btn" data-act="today"'+(isNow?' aria-current="true" title="Je kijkt al naar '+({day:"vandaag",week:"deze week",month:"deze maand"})[ui.view]+'"':'')+'>'+ICON.cal+'<span>'+({day:"Vandaag",week:"Deze week",month:"Deze maand"})[ui.view]+'</span></button>'+
     '</div>'+
     '<div class="filter" role="group" aria-label="Toon items voor">'+
       [["all","Iedereen"],["ewoud","Ewoud"],["helen","Helen"]].map(function(f){return '<button data-act="filter" data-who="'+f[0]+'" aria-pressed="'+(ui.who===f[0])+'">'+f[1]+'</button>';}).join("")+
