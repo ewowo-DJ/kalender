@@ -320,6 +320,14 @@ button{cursor:pointer}
 .own-pick input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .own code{font-size:12px;color:var(--muted)}
 .link{border:0;background:none;color:var(--accent);text-decoration:underline;font-size:13px;padding:0;margin-left:auto}
+.te-color{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.te-prev{font-size:12px;font-weight:600;padding:5px 9px;border-radius:7px;background:color-mix(in srgb,var(--c) 15%,var(--surface));border-left:4px solid var(--c)}
+.dual{background-image:linear-gradient(120deg,color-mix(in srgb,var(--c) 16%,var(--surface)) 0%,color-mix(in srgb,var(--c2) 16%,var(--surface)) 100%) !important;border-left-color:transparent !important}
+.blk.dual::before,.mchip.dual::before{content:"";position:absolute;top:0;bottom:0;left:0;width:4px;background:linear-gradient(var(--c) 50%,var(--c2) 50%)}
+.blk.dual{border-left:0 !important;padding-left:12px}
+.mchip.dual{position:relative;border-left:0 !important;padding-left:9px}
+.mchip.dual::before{width:3px}
+.bar.dual{background:linear-gradient(var(--c) 50%,var(--c2) 50%) !important}
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -463,7 +471,7 @@ function renderMonth(){
     var s=iso(d), its=itemsOn(s), marks="";
     if(isDesk()){
       its.slice(0,4).forEach(function(i){
-        marks += '<span class="mchip'+(i.type==="task"?" task":"")+(i.done?" done":"")+'" style="--c:'+evColor(i)+'">'+(i.start?'<b>'+esc(i.start)+'</b> ':'')+(i.type==="anniversary"?'<i class="hrt">'+ICON.heart+'</i> ':'')+esc(yearly(i)?bdayTitle(i):i.title)+'</span>';
+        marks += '<span class="mchip'+(i.type==="task"?" task":"")+(i.done?" done":"")+dual(i).cls+'" style="--c:'+evColor(i)+dual(i).css+'">'+(i.start?'<b>'+esc(i.start)+'</b> ':'')+(i.type==="anniversary"?'<i class="hrt">'+ICON.heart+'</i> ':'')+esc(yearly(i)?bdayTitle(i):i.title)+'</span>';
       });
       if(its.length>4) marks+='<span class="more">+'+(its.length-4)+' meer</span>';
     } else
@@ -496,7 +504,7 @@ function renderItem(i){
   if(i.type==="event"){
     var te=i.source==="timeedit";
     return '<div class="item'+(te?" te":"")+'"'+(te?'':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
-      '<span class="bar" style="background:'+(COLORS[i.color]||COLORS.blue)+'"></span>'+
+      '<span class="bar'+dual(i).cls+'" style="background:'+evColor(i)+dual(i).css+'"></span>'+
       '<div class="time">'+(i.start?esc(i.start):"Hele dag")+(i.end?'<small>'+esc(i.end)+'</small>':'')+'</div>'+
       '<div class="body"><div class="title-row"><div class="title">'+esc(i.title)+'</div>'+chip(i.who)+'</div>'+
       (i.location?'<div class="meta">'+ICON.pin+'<a href="'+esc(mapUrl)+'" target="_blank" rel="noopener" data-stop="1">'+esc(i.location)+'</a></div>':'')+
@@ -582,6 +590,7 @@ document.addEventListener("input",function(e){
 });
 document.addEventListener("change",function(e){
   if(e.target.id==="accent-pick"){ setAccent(e.target.value,true); render(); return; }
+  if(e.target.classList&&e.target.classList.contains("te-pick")){ readTEForm(); setTEColor(e.target.dataset.w, e.target.value, true); render(); return; }
   var t=e.target; if(!t.classList||!t.classList.contains("native")) return;
   var txt=document.getElementById(t.id.slice(0,-2)); if(txt&&t.value){ txt.value=fmtBE(t.value); txt.dispatchEvent(new Event("input",{bubbles:true})); }
 });
@@ -645,7 +654,17 @@ function isoWeek(dstr){
   var w1=new Date(d.getFullYear(),0,4,12);
   return 1+Math.round(((d-w1)/864e5-3+((w1.getDay()+6)%7))/7);
 }
-function evColor(i){ return i.type==="task" ? "var(--task)" : yearly(i) ? "var(--bday)" : (COLORS[i.color]||COLORS.blue); }
+function teColor(w){ var c=(typeof TE!=="undefined"&&TE.colors)||{}; return c[w]||COLORS.teal; }
+/* Shared classes get both colours: returns the second colour, or "" */
+function evColor2(i){ if(i.source!=="timeedit"||i.who!=="both") return ""; var ce=teColor("ewoud"), ch=teColor("helen"); return ce===ch?"":ch; }
+function dual(i){ var c2=evColor2(i); return c2 ? {cls:" dual", css:";--c2:"+c2} : {cls:"", css:""}; }
+function evColor(i){
+  if(i.source==="timeedit"){
+    var ce=teColor("ewoud"), ch=teColor("helen");
+    return i.who==="helen" ? ch : ce;
+  }
+  return i.type==="task" ? "var(--task)" : yearly(i) ? "var(--bday)" : (COLORS[i.color]||COLORS.blue);
+}
 /* Place overlapping events side by side, like TimeEdit. */
 function layoutDay(evs){
   evs.sort(function(a,b){ return a.s-b.s || b.e-a.e; });
@@ -711,7 +730,8 @@ function renderTimeGrid(dates){
       var blocks=evs.map(function(ev){
         var i=ev.i, te=i.source==="timeedit", top=(ev.s-lo)/60*HOUR, hgt=Math.max((ev.e-ev.s)/60*HOUR-2, 22);
         var w=100/ev.ncol, left=ev.col*w, short=hgt<52;
-        return '<div class="blk'+(te?" te":"")+(short?" short":"")+(ev.ncol>1&&dates.length>1?" narrow":"")+'" style="--c:'+evColor(i)+';top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 2px);width:calc('+w+'% - 4px)"'+
+        var du=dual(i);
+        return '<div class="blk'+(te?" te":"")+du.cls+(short?" short":"")+(ev.ncol>1&&dates.length>1?" narrow":"")+'" style="--c:'+evColor(i)+du.css+';top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 2px);width:calc('+w+'% - 4px)"'+
           (te?' title="'+esc(i.title+(i.location?" · "+i.location:""))+'"':' title="'+esc(byLine(i))+'" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
           '<div class="blk-t"><span>'+esc(i.start)+(i.end?'<span class="end">–'+esc(i.end)+'</span>':'')+'</span>'+(i.who?'<em class="who who-'+i.who+'">'+PEOPLE[i.who].name+'</em>':'')+'</div>'+
           '<div class="blk-n" lang="nl">'+esc(i.title)+'</div>'+
@@ -760,12 +780,12 @@ function upcomingBdays(){
     }).join("")+'</div></div>';
 }
 /* ---------- TimeEdit koppelen: links stored in Firestore settings/timeedit ---------- */
-var TE={state:"loading", ewoud:"", helen:"", updated:{}}, stopTE=null;
+var TE={state:"loading", ewoud:"", helen:"", updated:{}, colors:{}}, stopTE=null;
 function validTE(u){ return /^https:\/\/[a-z0-9.\-]*timeedit\.net\/\S+\.ics(\?\S*)?$/i.test(String(u||"").trim()); }
 function startTE(){
   if(!window.firebase) return;
   stopTE=firebase.firestore().doc("settings/timeedit").onSnapshot(function(d){
-    var v=d.exists?d.data():{}; TE.ewoud=v.ewoud||""; TE.helen=v.helen||""; TE.updated=v.updated||{}; TE.state="ready";
+    var v=d.exists?d.data():{}; TE.ewoud=v.ewoud||""; TE.helen=v.helen||""; TE.updated=v.updated||{}; TE.colors=v.colors||{}; TE.state="ready";
     if(ui.ssheet) return; render();
   }, function(err){ TE.state = err&&err.code==="permission-denied" ? "denied" : "error"; render(); });
 }
@@ -779,6 +799,9 @@ function renderTESheet(){
         ? '<div class="te-linked"><span class="ok">Gekoppeld</span><code>'+esc(maskTE(cur))+'</code>'+(TE.updated[w]?'<small>door '+esc(TE.updated[w])+'</small>':'')+
           '<div class="te-actions"><button type="button" class="pill-btn" data-act="te-edit" data-w="'+w+'">Andere link</button><button type="button" class="pill-btn danger" data-act="te-remove" data-w="'+w+'">Ontkoppelen</button></div></div>'
         : '<input id="te-'+w+'" type="url" inputmode="url" autocomplete="off" placeholder="https://cloud.timeedit.net/…/….ics" value="'+esc(draft||"")+'">')+
+      '<div class="te-color"><span class="lbl">Kleur van de lessen</span><div class="swatch-row">'+
+        TE_PRESETS.map(function(c){ return '<button type="button" class="sw" style="background:'+c+'" data-act="te-color" data-w="'+w+'" data-c="'+c+'" aria-label="Lessen van '+PEOPLE[w].name+' in '+c+'" aria-pressed="'+(teColor(w).toLowerCase()===c)+'"></button>'; }).join("")+
+      '</div><div class="own"><label class="own-pick" style="--pick:'+teColor(w)+'"><input type="color" class="te-pick" data-w="'+w+'" value="'+teColor(w)+'" aria-label="Eigen kleur voor de lessen van '+PEOPLE[w].name+'"><span>Eigen kleur</span></label><span class="te-prev" style="--c:'+teColor(w)+'">Voorbeeld</span></div></div>'+
     '</div>';
   };
   return '<div class="scrim" data-act="scrim"><form class="sheet" id="tesheet" novalidate>'+
@@ -790,6 +813,11 @@ function renderTESheet(){
     '<p class="err" role="alert">'+esc(ui.err)+'</p>'+
     '<div class="actions"><button type="submit" class="primary">Opslaan</button></div>'+
   '</form></div>';
+}
+var TE_PRESETS=["#1e8fa6","#16707f","#2b9469","#3552d4","#8457d1","#b8457a","#d23f66","#c46a10"];
+function setTEColor(w, hex, save){
+  TE.colors=Object.assign({}, TE.colors); TE.colors[w]=hex;
+  if(save && window.firebase){ var c={}; c[w]=hex; firebase.firestore().doc("settings/timeedit").set({colors:c},{merge:true}).catch(function(){ statusText="De kleur kon niet bewaard worden. Zijn de Firebase-regels bijgewerkt?"; }); }
 }
 function readTEForm(){ ["ewoud","helen"].forEach(function(w){ var e=document.getElementById("te-"+w); if(e) ui.ssheet[w]=e.value.trim(); }); }
 function saveTE(){
@@ -1180,6 +1208,7 @@ document.addEventListener("click",function(e){
     case "edit": if(!canWrite) break; var src=S.items.find(function(i){return i.id===t.dataset.id;}); if(src){ var cp=JSON.parse(JSON.stringify(src)); if(cp.type==="birthday"&&cp.yearKnown===false) cp.date=cp.date; openSheet(cp); } break;
     case "toggle": e.stopPropagation(); if(!canWrite) break; var it=S.items.find(function(i){return i.id===t.dataset.id;}); if(it){ var c=JSON.parse(JSON.stringify(it)); c.done=!c.done; it.done=c.done; write(c.id, clean(c)); render(); } break;
     case "close": ui.sheet=null; ui.msheet=null; ui.ssheet=null; render(); break;
+    case "te-color": readTEForm(); setTEColor(t.dataset.w, t.dataset.c, true); render(); break;
     case "te-open": ui.menu=false; ui.ssheet={}; ui.err=""; render(); break;
     case "te-edit": readTEForm(); ui.ssheet[t.dataset.w]=""; render(); var f=document.getElementById("te-"+t.dataset.w); if(f) f.focus(); break;
     case "te-remove": readTEForm(); ui.ssheet[t.dataset.w]=""; ui.ssheet["rm_"+t.dataset.w]=true; render(); break;
@@ -1206,6 +1235,7 @@ document.addEventListener("keydown",function(e){
   if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches('.item[data-act="edit"],.item[data-act="editex"]')){e.preventDefault();e.target.click();}
 });
 document.addEventListener("input",function(e){
+  if(e.target.classList&&e.target.classList.contains("te-pick")){ var row=e.target.closest(".te-color"); if(row){ row.querySelector(".own-pick").style.setProperty("--pick",e.target.value); var pv=row.querySelector(".te-prev"); if(pv) pv.style.setProperty("--c",e.target.value); } return; }
   if(e.target.id==="accent-pick"){ applyAccent(e.target.value); userAccent=e.target.value; var hx=document.getElementById("accent-hex"); if(hx) hx.textContent=e.target.value.toUpperCase(); var op=e.target.closest(".own-pick"); if(op) op.style.setProperty("--pick",e.target.value); return; }
   if(e.target.id==="x-amt"&&ui.msheet){ ui.msheet.amountStr=e.target.value; var h=document.querySelector("#msheet .hint"); if(h) h.textContent=splitHint(ui.msheet); }
 });
