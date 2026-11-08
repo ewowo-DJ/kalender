@@ -276,6 +276,13 @@ button{cursor:pointer}
 .datef .native{position:absolute;right:0;bottom:0;width:44px;height:44px;opacity:0;pointer-events:none;border:0;padding:0}
 .date-read{font-size:12px;color:var(--muted);min-height:1em}
 .timef{font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.te-help{margin:0;padding-left:20px;font-size:14px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.te-linked{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.te-linked .ok{font-size:12px;font-weight:700;color:#fff;background:var(--ew);padding:2px 8px;border-radius:20px}
+.te-linked code{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.te-linked small{font-size:12px;color:var(--muted)}
+.te-actions{display:flex;gap:8px;width:100%}
+.pill-btn.danger{color:var(--danger)}
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -691,7 +698,7 @@ function placeGrid(keep){
 }
 /* Move the red line every minute (and roll over to a new day at midnight). */
 setInterval(function(){
-  if(authState!=="in" || ui.sheet || ui.msheet) return;
+  if(authState!=="in" || ui.sheet || ui.msheet || ui.ssheet) return;
   var t=iso(new Date()); if(t!==TODAY){ if(ui.sel===TODAY) ui.sel=t; TODAY=t; ui.month=ui.sel.slice(0,7); }
   if(ui.tab==="cal" && /^(day|week)$/.test(ui.view)) render();
 }, 60000);
@@ -709,6 +716,60 @@ function upcomingBdays(){
       return '<span>'+(o.i.type==="anniversary"?esc(bdayTitle(o.i)):esc(o.i.title)+(o.i.age>0?' wordt '+o.i.age:''))+' · '+when+'</span>';
     }).join("")+'</div></div>';
 }
+/* ---------- TimeEdit koppelen: links stored in Firestore settings/timeedit ---------- */
+var TE={state:"loading", ewoud:"", helen:"", updated:{}}, stopTE=null;
+function validTE(u){ return /^https:\/\/[a-z0-9.\-]*timeedit\.net\/\S+\.ics(\?\S*)?$/i.test(String(u||"").trim()); }
+function startTE(){
+  if(!window.firebase) return;
+  stopTE=firebase.firestore().doc("settings/timeedit").onSnapshot(function(d){
+    var v=d.exists?d.data():{}; TE.ewoud=v.ewoud||""; TE.helen=v.helen||""; TE.updated=v.updated||{}; TE.state="ready";
+    if(ui.ssheet) return; render();
+  }, function(err){ TE.state = err&&err.code==="permission-denied" ? "denied" : "error"; render(); });
+}
+function stopTimeEdit(){ if(stopTE){ stopTE(); stopTE=null; } TE.state="loading"; }
+function maskTE(u){ if(!u) return ""; var m=u.match(/^https:\/\/([^\/]+)\/(.*)$/); return m ? m[1]+"/…"+u.slice(-14) : u.slice(0,24)+"…"; }
+function renderTESheet(){
+  var row=function(w){
+    var cur=TE[w], draft=ui.ssheet[w];
+    return '<div class="field te-row"><label for="te-'+w+'">'+PEOPLE[w].name+'</label>'+
+      (cur&&draft==null
+        ? '<div class="te-linked"><span class="ok">Gekoppeld</span><code>'+esc(maskTE(cur))+'</code>'+(TE.updated[w]?'<small>door '+esc(TE.updated[w])+'</small>':'')+
+          '<div class="te-actions"><button type="button" class="pill-btn" data-act="te-edit" data-w="'+w+'">Andere link</button><button type="button" class="pill-btn danger" data-act="te-remove" data-w="'+w+'">Ontkoppelen</button></div></div>'
+        : '<input id="te-'+w+'" type="url" inputmode="url" autocomplete="off" placeholder="https://cloud.timeedit.net/…/….ics" value="'+esc(draft||"")+'">')+
+    '</div>';
+  };
+  return '<div class="scrim" data-act="scrim"><form class="sheet" id="tesheet" novalidate>'+
+    '<div class="sheet-h"><h3>TimeEdit koppelen</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
+    (TE.state==="denied"?'<p class="err">De app mag de instellingen nog niet lezen. De Firebase-regels moeten nog bijgewerkt worden.</p>':'')+
+    '<ol class="te-help"><li>Open je rooster in <b>TimeEdit</b> en klik op <b>Abonneren</b>.</li><li>Kies een lange periode, bv. tot het einde van het academiejaar.</li><li>Kopieer de link (eindigt op <b>.ics</b>) en plak hem hieronder.</li></ol>'+
+    row("ewoud")+row("helen")+
+    '<p class="hint">Je lessen worden elke ochtend automatisch bijgewerkt. Na een nieuwe koppeling zie je ze dus ten laatste morgen. Wie samen les heeft, krijgt het label "Beiden".</p>'+
+    '<p class="err" role="alert">'+esc(ui.err)+'</p>'+
+    '<div class="actions"><button type="submit" class="primary">Opslaan</button></div>'+
+  '</form></div>';
+}
+function readTEForm(){ ["ewoud","helen"].forEach(function(w){ var e=document.getElementById("te-"+w); if(e) ui.ssheet[w]=e.value.trim(); }); }
+function saveTE(){
+  readTEForm();
+  var upd={}, bad=[];
+  ["ewoud","helen"].forEach(function(w){
+    var v=ui.ssheet[w];
+    if(v==null) return;
+    if(v==="" ){ if(ui.ssheet["rm_"+w]) upd[w]=""; return; }
+    if(!validTE(v)) bad.push(PEOPLE[w].name); else upd[w]=v;
+  });
+  ["ewoud","helen"].forEach(function(w){ if(ui.ssheet["rm_"+w]) upd[w]=""; });
+  if(bad.length){ ui.err="De link van "+bad.join(" en ")+" lijkt geen TimeEdit-abonnementslink. Hij moet beginnen met https:// en eindigen op .ics."; render(); return; }
+  if(!Object.keys(upd).length){ ui.ssheet=null; render(); return; }
+  var body={updated:{}};
+  Object.keys(upd).forEach(function(w){ body[w]=upd[w]; body.updated[w]=userName||userEmail; });
+  firebase.firestore().doc("settings/timeedit").set(body,{merge:true}).then(function(){
+    ui.ssheet=null; statusText="TimeEdit-koppeling opgeslagen. Je lessen verschijnen bij de volgende update (elke ochtend)."; render();
+  }).catch(function(err){
+    ui.err = err&&err.code==="permission-denied" ? "Opslaan mag nog niet: de Firebase-regels moeten bijgewerkt worden." : "Opslaan is niet gelukt. Controleer je verbinding."; render();
+  });
+}
+
 function appNav(){
   return '<nav class="appnav" aria-label="Onderdelen">'+
     '<button data-act="tab" data-tab="cal" aria-pressed="'+(ui.tab==="cal")+'">'+ICON.cal+'Kalender</button>'+
@@ -756,10 +817,10 @@ function renderApp(){
     upcomingBdays()+
     body+
     (statusText?'<div class="status">'+esc(statusText)+'</div>':'')+
-    '<div class="foot"><span>Ingelogd als '+esc(userEmail)+'</span><button data-act="logout">Uitloggen</button></div>'+
+    '<div class="foot"><span>Ingelogd als '+esc(userEmail)+'</span><button data-act="logout">Uitloggen</button><button data-act="te-open">TimeEdit koppelen'+(TE.state==="ready"?' ('+(["ewoud","helen"].filter(function(w){return TE[w];}).length)+'/2)':'')+'</button></div>'+
   '</div>'+
   (canWrite?'<button class="fab" data-act="add">'+ICON.plus+'Toevoegen</button>':'')+
-  (ui.sheet?renderSheet():"");
+  (ui.sheet?renderSheet():"")+(ui.ssheet?renderTESheet():"");
   var active=document.activeElement&&document.activeElement.id;
   var oldSc=document.getElementById("tgscroll"), keep=oldSc&&ui._lastKey===(ui._grid&&ui._grid.key)?{t:oldSc.scrollTop,l:oldSc.scrollLeft}:null;
   if(!/^(day|week)$/.test(ui.view)) ui._grid=null;
@@ -785,7 +846,7 @@ function write(id, body){
     });
 }
 function clean(it){ var b={}; for(var k in it){ if(k!=="id" && it[k]!==undefined) b[k]=it[k]; } return b; }
-function unsub(){ if(stopSnap){ stopSnap(); stopSnap=null; } if(typeof stopExpenses==="function") stopExpenses(); }
+function unsub(){ if(stopSnap){ stopSnap(); stopSnap=null; } if(typeof stopExpenses==="function") stopExpenses(); if(typeof stopTimeEdit==="function") stopTimeEdit(); }
 function doLogin(){
   loginErr="";
   var p=new firebase.auth.GoogleAuthProvider();
@@ -808,7 +869,7 @@ function start(){
     unsub();
     if(!user){ authState="out"; S.items=[]; render(); return; }
     authState="in"; userEmail=user.email||""; userName=cap(((user.displayName||user.email||"").split(/[\s@._]/)[0]||"").toLowerCase()); canWrite=true; loadState="Je kalender wordt geladen…"; render();
-    startExpenses();
+    startExpenses(); startTE();
     var t=setTimeout(function(){ loadState = S.items.length ? "Offline: je ziet de laatst opgeslagen versie." : "De kalender is nu niet bereikbaar. Controleer je verbinding."; render(); },10000);
     stopSnap=col.onSnapshot({includeMetadataChanges:true}, function(snap){
       S.items=snap.docs.map(function(doc){ var o=Object.assign({}, doc.data()); o.id=doc.id; return o; });
@@ -974,7 +1035,7 @@ document.addEventListener("click",function(e){
   var t=e.target.closest("[data-act],[data-stop]"); if(!t) return;
   if(t.hasAttribute("data-stop")) return;
   var act=t.getAttribute("data-act");
-  if(act==="scrim"){ if(e.target===t){ui.sheet=null;ui.msheet=null;render();} return; }
+  if(act==="scrim"){ if(e.target===t){ui.sheet=null;ui.msheet=null;ui.ssheet=null;render();} return; }
   switch(act){
     case "login": doLogin(); break;
     case "logout": unsub(); firebase.auth().signOut(); break;
@@ -997,7 +1058,10 @@ document.addEventListener("click",function(e){
     case "add": if(!canWrite) break; openSheet({type:"event",who:"",title:"",date:ui.sel,start:"",end:"",location:"",notes:"",color:"blue",done:false}); break;
     case "edit": if(!canWrite) break; var src=S.items.find(function(i){return i.id===t.dataset.id;}); if(src){ var cp=JSON.parse(JSON.stringify(src)); if(cp.type==="birthday"&&cp.yearKnown===false) cp.date=cp.date; openSheet(cp); } break;
     case "toggle": e.stopPropagation(); if(!canWrite) break; var it=S.items.find(function(i){return i.id===t.dataset.id;}); if(it){ var c=JSON.parse(JSON.stringify(it)); c.done=!c.done; it.done=c.done; write(c.id, clean(c)); render(); } break;
-    case "close": ui.sheet=null; ui.msheet=null; render(); break;
+    case "close": ui.sheet=null; ui.msheet=null; ui.ssheet=null; render(); break;
+    case "te-open": ui.ssheet={}; ui.err=""; render(); break;
+    case "te-edit": readTEForm(); ui.ssheet[t.dataset.w]=""; render(); var f=document.getElementById("te-"+t.dataset.w); if(f) f.focus(); break;
+    case "te-remove": readTEForm(); ui.ssheet[t.dataset.w]=""; ui.ssheet["rm_"+t.dataset.w]=true; render(); break;
     case "tab": ui.tab=t.dataset.tab; ui.sheet=null; ui.msheet=null; saveUI(); render(); window.scrollTo(0,0); break;
     case "addex": if(canWrite) openEx("expense"); break;
     case "settle": if(canWrite) openEx("settle"); break;
@@ -1016,7 +1080,7 @@ document.addEventListener("click",function(e){
   }
 });
 document.addEventListener("keydown",function(e){
-  if(e.key==="Escape"&&(ui.sheet||ui.msheet)){ui.sheet=null;ui.msheet=null;render();return;}
+  if(e.key==="Escape"&&(ui.sheet||ui.msheet||ui.ssheet)){ui.sheet=null;ui.msheet=null;ui.ssheet=null;render();return;}
   if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches('.item[data-act="edit"],.item[data-act="editex"]')){e.preventDefault();e.target.click();}
 });
 document.addEventListener("input",function(e){
@@ -1025,6 +1089,7 @@ document.addEventListener("input",function(e){
 document.addEventListener("submit",function(e){
   e.preventDefault();
   if(e.target.id==="msheet"){ submitEx(); return; }
+  if(e.target.id==="tesheet"){ saveTE(); return; }
   readForm(); var it=ui.sheet;
   if(!it.who){ui.err="Kies voor wie het is: Ewoud, Helen of beiden."; render(); return;}
   if(!it.title){ui.err=it.type==="birthday"?"Vul de naam in.":"Geef eerst een titel op."; render(); return;}

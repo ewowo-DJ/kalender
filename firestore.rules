@@ -13,6 +13,10 @@ service cloud.firestore {
       allow create, update: if isFamily() && !id.matches('te-.*') && request.resource.data.get('source', '') != 'timeedit';
       allow delete: if isFamily() && !id.matches('te-.*');
     }
+    // TimeEdit links, pasted in the app.
+    match /settings/{id} {
+      allow read, write: if isFamily();
+    }
     // Shared expenses: both can add, change and remove.
     match /expenses/{id} {
       allow read, write: if isFamily();

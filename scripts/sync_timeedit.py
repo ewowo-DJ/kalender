@@ -1,8 +1,11 @@
 """Copy the TimeEdit timetable into the calendar's Firestore database.
 
-Runs daily from GitHub Actions. Repository secrets:
-  TIMEEDIT_URL               Ewoud's TimeEdit .ics subscription link
-  TIMEEDIT_URL_HELEN         Helen's TimeEdit .ics subscription link (optional)
+Runs daily from GitHub Actions.
+
+The TimeEdit links are pasted in the app ("TimeEdit koppelen") and stored in
+Firestore at settings/timeedit. The repository secrets TIMEEDIT_URL and
+TIMEEDIT_URL_HELEN are only used as a fallback when no link is set in the app.
+FIREBASE_SERVICE_ACCOUNT (the service-account key JSON) is always required.
   FIREBASE_SERVICE_ACCOUNT   the full JSON of a Firebase service-account key
 
 Each class becomes the document items/te-<id>, labelled for Ewoud, Helen, or both
@@ -14,6 +17,7 @@ import os
 import re
 import sys
 import urllib.request
+from urllib.parse import urlparse
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
@@ -28,6 +32,16 @@ def fetch(url):
     req = urllib.request.Request(url, headers={"User-Agent": "calendar-sync"})
     with urllib.request.urlopen(req, timeout=60) as r:
         return r.read()
+
+
+def valid_link(url):
+    """Only real TimeEdit .ics links over https are fetched."""
+    try:
+        u = urlparse(url.strip())
+    except ValueError:
+        return False
+    host = (u.hostname or "").lower()
+    return u.scheme == "https" and (host == "timeedit.net" or host.endswith(".timeedit.net")) and u.path.endswith(".ics")
 
 
 def clean_title(summary):
@@ -86,10 +100,26 @@ def parse(raw, who="both"):
 
 def main():
     sa = os.environ.get("FIREBASE_SERVICE_ACCOUNT", "").strip()
-    feeds = [(w, os.environ.get(k, "").strip()) for w, k in (("ewoud", "TIMEEDIT_URL"), ("helen", "TIMEEDIT_URL_HELEN"))]
-    feeds = [(w, u) for w, u in feeds if u]
-    if not feeds or not sa:
-        sys.exit("FIREBASE_SERVICE_ACCOUNT and at least one TimeEdit link (TIMEEDIT_URL) are required")
+    if not sa:
+        sys.exit("The FIREBASE_SERVICE_ACCOUNT secret is required")
+    firebase_admin.initialize_app(credentials.Certificate(json.loads(sa)))
+    db = firestore.client()
+    col = db.collection("items")
+
+    # Links set in the app win; the repository secrets are a fallback.
+    snap = db.document("settings/timeedit").get()
+    in_app = snap.to_dict() if snap.exists else {}
+    feeds = []
+    for who, secret in (("ewoud", "TIMEEDIT_URL"), ("helen", "TIMEEDIT_URL_HELEN")):
+        url = (in_app.get(who) or "").strip() if who in in_app else os.environ.get(secret, "").strip()
+        if not url:
+            continue
+        if not valid_link(url):
+            print(f"{who}: link is not a TimeEdit .ics link, skipping it")
+            continue
+        feeds.append((who, url))
+    if not feeds:
+        sys.exit("No TimeEdit link is set. Paste one in the app under 'TimeEdit koppelen'.")
 
     # Fetch every feed first; if any fails, the script stops before changing anything.
     feed = {}
@@ -103,10 +133,6 @@ def main():
                 feed[doc_id]["who"] = "both"   # same class in both timetables
             else:
                 feed[doc_id] = body
-
-    firebase_admin.initialize_app(credentials.Certificate(json.loads(sa)))
-    db = firestore.client()
-    col = db.collection("items")
 
     existing = {
         doc.id: doc.to_dict()
