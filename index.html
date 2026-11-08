@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>My Calendar</title>
+<title>Onze kalender</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -252,6 +252,7 @@ button{cursor:pointer}
 .nowline{position:absolute;left:0;right:0;height:2px;background:var(--danger);z-index:2;pointer-events:none}
 .nowline::before{content:"";position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--danger)}
 
+.sheet-h h3 small.by{display:block;font:500 12px/1.3 var(--body);color:var(--muted);margin-top:3px}
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -303,12 +304,15 @@ button{cursor:pointer}
 (function(){
 "use strict";
 var S = {items:[]};
-var PEOPLE = {ewoud:{name:"Ewoud", short:"E"}, helen:{name:"Helen", short:"H"}, both:{name:"Both", short:"E+H"}};
+var PEOPLE = {ewoud:{name:"Ewoud", short:"E"}, helen:{name:"Helen", short:"H"}, both:{name:"Beiden", short:"E+H"}};
 
 var COLORS = {blue:"#3552d4", green:"#2b9469", rose:"#d23f66", violet:"#8457d1", teal:"#1e8fa6"};
-var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-var DOW = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-var DOW_LONG = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var MONTHS = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
+var MONTHS_SHORT = ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+function cap(t){ return t ? t.charAt(0).toUpperCase()+t.slice(1) : t; }
+var DOW = ["ma","di","wo","do","vr","za","zo"];
+var DOW_SHORT = ["zo","ma","di","wo","do","vr","za"];
+var DOW_LONG = ["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
 
 function pad(n){return (n<10?"0":"")+n;}
 function iso(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
@@ -323,7 +327,13 @@ try { var u = JSON.parse(localStorage.getItem("cal-ui")||"null"); if(u){ui.view=
 ui.month = ui.sel.slice(0,7);
 function saveUI(){try{localStorage.setItem("cal-ui",JSON.stringify({tab:ui.tab,view:ui.view,who:ui.who,classes:ui.classes}));}catch(e){}}
 function visible(i){ if(!ui.classes && i.source==="timeedit") return false; return ui.who==="all" || i.who===ui.who || i.who==="both"; }
-function chip(w){ var p=PEOPLE[w]; if(!p) return ""; return '<span class="who who-'+w+'" title="For '+p.name+'">'+(w==="both"?"Both":p.name)+'</span>'; }
+function byLine(o){
+  var a=o.addedBy, e=o.editedBy, parts=[];
+  if(a) parts.push("Toegevoegd door "+a);
+  if(e && e!==a) parts.push((a?"gewijzigd":"Gewijzigd")+" door "+e);
+  return parts.join(" · ");
+}
+function chip(w){ var p=PEOPLE[w]; if(!p) return ""; return '<span class="who who-'+w+'" title="Voor '+p.name+'">'+p.name+'</span>'; }
 
 var ICON = {
   left:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
@@ -359,7 +369,7 @@ function renderMonth(){
       its.slice(0,4).forEach(function(i){
         marks += '<span class="mchip'+(i.type==="task"?" task":"")+(i.done?" done":"")+'" style="--c:'+evColor(i)+'">'+(i.start?'<b>'+esc(i.start)+'</b> ':'')+esc(i.title)+'</span>';
       });
-      if(its.length>4) marks+='<span class="more">+'+(its.length-4)+' more</span>';
+      if(its.length>4) marks+='<span class="more">+'+(its.length-4)+' meer</span>';
     } else
     its.slice(0,3).forEach(function(i){
       marks += i.type==="task" ? '<i class="t"></i>' : '<i style="background:'+(COLORS[i.color]||COLORS.blue)+'"></i>';
@@ -377,44 +387,45 @@ function renderItem(i){
     var te=i.source==="timeedit";
     return '<div class="item'+(te?" te":"")+'"'+(te?'':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
       '<span class="bar" style="background:'+(COLORS[i.color]||COLORS.blue)+'"></span>'+
-      '<div class="time">'+(i.start?esc(i.start):"All day")+(i.end?'<small>'+esc(i.end)+'</small>':'')+'</div>'+
+      '<div class="time">'+(i.start?esc(i.start):"Hele dag")+(i.end?'<small>'+esc(i.end)+'</small>':'')+'</div>'+
       '<div class="body"><div class="title-row"><div class="title">'+esc(i.title)+'</div>'+chip(i.who)+'</div>'+
       (i.location?'<div class="meta">'+ICON.pin+'<a href="'+esc(mapUrl)+'" target="_blank" rel="noopener" data-stop="1">'+esc(i.location)+'</a></div>':'')+
       (i.notes?'<div class="meta">'+ICON.note+'<span>'+esc(i.notes)+'</span></div>':'')+
-      (te?'<div class="meta"><span class="src">From TimeEdit · updates daily</span></div>':'')+
+      (te?'<div class="meta"><span class="src">Uit TimeEdit · dagelijks bijgewerkt</span></div>':(byLine(i)?'<div class="meta"><span class="src">'+esc(byLine(i))+'</span></div>':''))+
       '</div></div>';
   }
   return '<div class="item'+(i.done?" done":"")+'" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0">'+
-    '<button class="check" role="checkbox" aria-checked="'+(!!i.done)+'" aria-label="Mark '+esc(i.title)+' as done" data-act="toggle" data-id="'+i.id+'">'+ICON.tick+'</button>'+
-    '<div class="body"><div class="title-row"><span class="tag">Task'+(i.start?' · '+esc(i.start):'')+'</span>'+chip(i.who)+'</div><div class="title">'+esc(i.title)+'</div>'+
+    '<button class="check" role="checkbox" aria-checked="'+(!!i.done)+'" aria-label="'+esc(i.title)+' afvinken" data-act="toggle" data-id="'+i.id+'">'+ICON.tick+'</button>'+
+    '<div class="body"><div class="title-row"><span class="tag">Taak'+(i.start?' · '+esc(i.start):'')+'</span>'+chip(i.who)+'</div><div class="title">'+esc(i.title)+'</div>'+
     (i.notes?'<div class="meta">'+ICON.note+'<span>'+esc(i.notes)+'</span></div>':'')+
+    (byLine(i)?'<div class="meta"><span class="src">'+esc(byLine(i))+'</span></div>':'')+
     '</div></div>';
 }
 
 function renderDay(noHead){
   var its=itemsOn(ui.sel);
   var ev=its.filter(function(i){return i.type==="event";}).length, tk=its.length-ev;
-  var count=[ev?ev+" event"+(ev>1?"s":""):"", tk?tk+" task"+(tk>1?"s":""):""].filter(Boolean).join(", ");
-  var h=noHead?'':'<div class="panel-h"><h2>'+(ui.sel===TODAY?"Today, ":"")+esc(nice(ui.sel))+'</h2><span>'+(count||"")+'</span></div>';
-  if(!its.length) return h+'<div class="empty">Nothing planned for this day.<br><button class="pill-btn" data-act="add">Add an event or task</button></div>';
+  var count=[ev?ev+" afspra"+(ev>1?"ken":"ak"):"", tk?tk+" ta"+(tk>1?"ken":"ak"):""].filter(Boolean).join(", ");
+  var h=noHead?'':'<div class="panel-h"><h2>'+(ui.sel===TODAY?"Vandaag, ":"")+esc(ui.sel===TODAY?nice(ui.sel):cap(nice(ui.sel)))+'</h2><span>'+(count||"")+'</span></div>';
+  if(!its.length) return h+'<div class="empty">Niets gepland op deze dag.<br><button class="pill-btn" data-act="add">Afspraak of taak toevoegen</button></div>';
   return h+'<div class="list">'+its.map(renderItem).join("")+'</div>';
 }
 
 function sortItems(a,b){ var x=a.date+(a.start||"99:99"), y=b.date+(b.start||"99:99"); return x<y?-1:x>y?1:0; }
-function groupHead(d, first){ return '<div class="group-h'+(first?" first":"")+(d===TODAY?" is-today":"")+'">'+(d===TODAY?"Today · ":"")+esc(nice(d))+'</div>'; }
+function groupHead(d, first){ return '<div class="group-h'+(first?" first":"")+(d===TODAY?" is-today":"")+'">'+(d===TODAY?"Vandaag · ":"")+esc(nice(d))+'</div>'; }
 function weekStart(dstr){ var d=parse(dstr); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d; }
 function addDays(dstr,n){ var d=parse(dstr); d.setDate(d.getDate()+n); return iso(d); }
 function renderWeek(){
   var st=weekStart(ui.sel), out="";
   for(var k=0;k<7;k++){
     var d=iso(new Date(st.getFullYear(),st.getMonth(),st.getDate()+k)), its=itemsOn(d);
-    out+=groupHead(d,k===0)+(its.length?'<div class="list">'+its.map(renderItem).join("")+'</div>':'<div class="none">Nothing planned</div>');
+    out+=groupHead(d,k===0)+(its.length?'<div class="list">'+its.map(renderItem).join("")+'</div>':'<div class="none">Niets gepland</div>');
   }
   return out;
 }
 function weekLabel(){
   var a=weekStart(ui.sel), b=new Date(a.getFullYear(),a.getMonth(),a.getDate()+6);
-  return a.getMonth()===b.getMonth() ? a.getDate()+"–"+b.getDate()+" "+MONTHS[a.getMonth()] : a.getDate()+" "+MONTHS[a.getMonth()].slice(0,3)+" – "+b.getDate()+" "+MONTHS[b.getMonth()].slice(0,3);
+  return a.getMonth()===b.getMonth() ? a.getDate()+"–"+b.getDate()+" "+MONTHS[a.getMonth()] : a.getDate()+" "+MONTHS_SHORT[a.getMonth()]+" – "+b.getDate()+" "+MONTHS_SHORT[b.getMonth()];
 }
 
 function renderSheet(){
@@ -423,24 +434,24 @@ function renderSheet(){
     return '<button type="button" style="background:'+COLORS[c]+'" aria-label="'+c+'" aria-pressed="'+(it.color===c)+'" data-act="color" data-color="'+c+'"></button>';
   }).join("");
   return '<div class="scrim" data-act="scrim"><form class="sheet" id="sheet" novalidate>'+
-    '<div class="sheet-h"><h3>'+(it.id?"Edit ":"New ")+(isEv?"event":"task")+'</h3><button type="button" class="icon-btn" data-act="close" aria-label="Close">'+ICON.close+'</button></div>'+
-    (it.id?'':'<div class="tabs" role="group" aria-label="Type"><button type="button" data-act="type" data-type="event" aria-pressed="'+isEv+'">Event</button><button type="button" data-act="type" data-type="task" aria-pressed="'+(!isEv)+'">Task</button></div>')+
-    '<div class="field"><label id="l-who">Who is it for?</label><div class="tabs who-pick" role="radiogroup" aria-labelledby="l-who">'+
+    '<div class="sheet-h"><h3>'+(it.id?(isEv?"Afspraak wijzigen":"Taak wijzigen"):(isEv?"Nieuwe afspraak":"Nieuwe taak"))+(it.id&&byLine(it)?'<small class="by">'+esc(byLine(it))+'</small>':'')+'</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
+    (it.id?'':'<div class="tabs" role="group" aria-label="Soort"><button type="button" data-act="type" data-type="event" aria-pressed="'+isEv+'">Afspraak</button><button type="button" data-act="type" data-type="task" aria-pressed="'+(!isEv)+'">Taak</button></div>')+
+    '<div class="field"><label id="l-who">Voor wie?</label><div class="tabs who-pick" role="radiogroup" aria-labelledby="l-who">'+
       ["ewoud","helen","both"].map(function(w){return '<button type="button" role="radio" class="wp-'+w+'" data-act="who" data-who="'+w+'" aria-checked="'+(it.who===w)+'" aria-pressed="'+(it.who===w)+'">'+PEOPLE[w].name+'</button>';}).join("")+
     '</div></div>'+
-    '<div class="field"><label for="f-title">Title</label><input id="f-title" value="'+esc(it.title)+'" placeholder="'+(isEv?"e.g. Lunch with Sam":"e.g. Call the bank")+'" autocomplete="off"></div>'+
-    '<div class="field"><label for="f-date">Date</label><input id="f-date" type="date" value="'+esc(it.date)+'"></div>'+
+    '<div class="field"><label for="f-title">Titel</label><input id="f-title" value="'+esc(it.title)+'" placeholder="'+(isEv?"bv. Lunch met Sam":"bv. De bank bellen")+'" autocomplete="off"></div>'+
+    '<div class="field"><label for="f-date">Datum</label><input id="f-date" type="date" value="'+esc(it.date)+'"></div>'+
     (isEv?
-      '<div class="row"><div class="field"><label for="f-start">Starts</label><input id="f-start" type="time" value="'+esc(it.start)+'"></div><div class="field"><label for="f-end">Ends</label><input id="f-end" type="time" value="'+esc(it.end)+'"></div></div>'+
-      '<div class="field"><label for="f-loc">Location</label><input id="f-loc" value="'+esc(it.location)+'" placeholder="Address or place name" autocomplete="off"></div>'+
-      '<div class="field"><label>Colour</label><div class="swatches">'+sw+'</div></div>'
+      '<div class="row"><div class="field"><label for="f-start">Begin</label><input id="f-start" type="time" value="'+esc(it.start)+'"></div><div class="field"><label for="f-end">Einde</label><input id="f-end" type="time" value="'+esc(it.end)+'"></div></div>'+
+      '<div class="field"><label for="f-loc">Locatie</label><input id="f-loc" value="'+esc(it.location)+'" placeholder="Adres of plaats" autocomplete="off"></div>'+
+      '<div class="field"><label>Kleur</label><div class="swatches">'+sw+'</div></div>'
     :
-      '<div class="field"><label for="f-start">Time (optional)</label><input id="f-start" type="time" value="'+esc(it.start)+'"></div>'
+      '<div class="field"><label for="f-start">Tijd (optioneel)</label><input id="f-start" type="time" value="'+esc(it.start)+'"></div>'
     )+
-    '<div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" placeholder="Optional">'+esc(it.notes)+'</textarea></div>'+
+    '<div class="field"><label for="f-notes">Notities</label><textarea id="f-notes" placeholder="Optioneel">'+esc(it.notes)+'</textarea></div>'+
     '<p class="err" role="alert">'+esc(ui.err)+'</p>'+
-    '<div class="actions">'+(it.id?'<button type="button" class="del'+(ui.armed?" armed":"")+'" data-act="delete">'+(ui.armed?"Tap again to delete":"Delete")+'</button>':'')+
-    '<button type="submit" class="primary">'+(it.id?"Save changes":"Add "+(isEv?"event":"task"))+'</button></div>'+
+    '<div class="actions">'+(it.id?'<button type="button" class="del'+(ui.armed?" armed":"")+'" data-act="delete">'+(ui.armed?"Tik nogmaals om te verwijderen":"Verwijderen")+'</button>':'')+
+    '<button type="submit" class="primary">'+(it.id?"Wijzigingen opslaan":(isEv?"Afspraak toevoegen":"Taak toevoegen"))+'</button></div>'+
   '</form></div>';
 }
 
@@ -455,8 +466,8 @@ window.addEventListener("resize",fitTitle);
 try{ document.fonts && document.fonts.ready.then(fitTitle); }catch(e){}
 function render(){
   if(authState!=="in"){
-    document.getElementById("root").innerHTML='<div class="login"><h1>My Calendar</h1>'+
-      (authState==="loading"?'<p>Loading…</p>':'<p>Sign in with your Google account to see the calendar.</p><button class="primary" data-act="login">Sign in with Google</button>')+
+    document.getElementById("root").innerHTML='<div class="login"><h1>Onze kalender</h1>'+
+      (authState==="loading"?'<p>Laden…</p>':'<p>Log in met je Google-account om de kalender te zien.</p><button class="primary" data-act="login">Inloggen met Google</button>')+
       (loginErr?'<p class="err">'+esc(loginErr)+'</p>':'')+'</div>';
     return;
   }
@@ -505,18 +516,18 @@ function renderTimeGrid(dates){
 
   var head='<div class="tg-row tg-head" style="grid-template-columns:'+cols+'"><div class="tg-corner">W'+isoWeek(dates[0])+'</div>'+
     dates.map(function(d){ var dd=parse(d);
-      return '<button class="tg-dh'+(d===TODAY?" today":"")+'" data-act="goday" data-date="'+d+'"><span>'+DOW_LONG[dd.getDay()].slice(0,3)+'</span><b>'+dd.getDate()+'</b><small>'+MONTHS[dd.getMonth()].slice(0,3)+'</small></button>';
+      return '<button class="tg-dh'+(d===TODAY?" today":"")+'" data-act="goday" data-date="'+d+'"><span>'+DOW_SHORT[dd.getDay()]+'</span><b>'+dd.getDate()+'</b><small>'+MONTHS_SHORT[dd.getMonth()]+'</small></button>';
     }).join("")+'</div>';
 
   var hasAll=false;
-  var allday='<div class="tg-row tg-all" style="grid-template-columns:'+cols+'"><div class="tg-corner sm">All day<br>& tasks</div>'+
+  var allday='<div class="tg-row tg-all" style="grid-template-columns:'+cols+'"><div class="tg-corner sm">Hele dag<br>& taken</div>'+
     perDay.map(function(its,k){
       var list=its.filter(function(i){ return i.type==="task" || mins(i.start)==null; });
       if(list.length) hasAll=true;
       return '<div class="tg-allcell'+(dates[k]===TODAY?" today":"")+'">'+list.map(function(i){
         var te=i.source==="timeedit", task=i.type==="task";
         return '<div class="chip'+(task?" task":"")+(i.done?" done":"")+'" style="--c:'+evColor(i)+'"'+(te?'':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
-          (task?'<button class="mini-check" role="checkbox" aria-checked="'+(!!i.done)+'" aria-label="Done" data-act="toggle" data-id="'+i.id+'">'+ICON.tick+'</button>':'')+
+          (task?'<button class="mini-check" role="checkbox" aria-checked="'+(!!i.done)+'" aria-label="Klaar" data-act="toggle" data-id="'+i.id+'">'+ICON.tick+'</button>':'')+
           '<span>'+(i.start&&task?esc(i.start)+' ':'')+esc(i.title)+'</span>'+(i.who&&i.who!=="both"?'<em class="dot-'+i.who+'" title="'+PEOPLE[i.who].name+'"></em>':'')+'</div>';
       }).join("")+'</div>';
     }).join("")+'</div>';
@@ -538,8 +549,8 @@ function renderTimeGrid(dates){
         var i=ev.i, te=i.source==="timeedit", top=(ev.s-lo)/60*HOUR, hgt=Math.max((ev.e-ev.s)/60*HOUR-2, 22);
         var w=100/ev.ncol, left=ev.col*w, short=hgt<52;
         return '<div class="blk'+(te?" te":"")+(short?" short":"")+(ev.ncol>1&&dates.length>1?" narrow":"")+'" style="--c:'+evColor(i)+';top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 2px);width:calc('+w+'% - 4px)"'+
-          (te?' title="'+esc(i.title+(i.location?" · "+i.location:""))+'"':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
-          '<div class="blk-t"><span>'+esc(i.start)+(i.end?'<span class="end">–'+esc(i.end)+'</span>':'')+'</span>'+(i.who?'<em class="who who-'+i.who+'">'+(i.who==="both"?"Both":PEOPLE[i.who].name)+'</em>':'')+'</div>'+
+          (te?' title="'+esc(i.title+(i.location?" · "+i.location:""))+'"':' title="'+esc(byLine(i))+'" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
+          '<div class="blk-t"><span>'+esc(i.start)+(i.end?'<span class="end">–'+esc(i.end)+'</span>':'')+'</span>'+(i.who?'<em class="who who-'+i.who+'">'+PEOPLE[i.who].name+'</em>':'')+'</div>'+
           '<div class="blk-n" lang="nl">'+esc(i.title)+'</div>'+
           (i.location&&!short?'<div class="blk-l" lang="nl">'+esc(i.location)+'</div>':'')+
         '</div>';
@@ -572,16 +583,16 @@ setInterval(function(){
   if(ui.tab==="cal" && /^(day|week)$/.test(ui.view)) render();
 }, 60000);
 function appNav(){
-  return '<nav class="appnav" aria-label="Sections">'+
-    '<button data-act="tab" data-tab="cal" aria-pressed="'+(ui.tab==="cal")+'">'+ICON.cal+'Calendar</button>'+
-    '<button data-act="tab" data-tab="money" aria-pressed="'+(ui.tab==="money")+'">'+ICON.euro+'Expenses</button></nav>';
+  return '<nav class="appnav" aria-label="Onderdelen">'+
+    '<button data-act="tab" data-tab="cal" aria-pressed="'+(ui.tab==="cal")+'">'+ICON.cal+'Kalender</button>'+
+    '<button data-act="tab" data-tab="money" aria-pressed="'+(ui.tab==="money")+'">'+ICON.euro+'Uitgaven</button></nav>';
 }
 function renderMoneyApp(){
   var h='<div class="wrap'+(isDesk()?" desk":"")+'"><div class="toolbar">'+appNav()+'</div>'+renderMoney()+
     (statusText?'<div class="status">'+esc(statusText)+'</div>':'')+
-    '<div class="foot"><span>Signed in as '+esc(userEmail)+'</span><button data-act="logout">Sign out</button></div>'+
+    '<div class="foot"><span>Ingelogd als '+esc(userEmail)+'</span><button data-act="logout">Uitloggen</button></div>'+
   '</div>'+
-  (canWrite?'<button class="fab" data-act="addex">'+ICON.plus+'Add</button>':'')+
+  (canWrite?'<button class="fab" data-act="addex">'+ICON.plus+'Toevoegen</button>':'')+
   (ui.msheet?renderExSheet():"");
   var active=document.activeElement&&document.activeElement.id;
   document.getElementById("root").innerHTML=h;
@@ -591,34 +602,34 @@ function renderApp(){
   if(ui.tab==="money"){ renderMoneyApp(); return; }
   var y=+ui.month.slice(0,4), m=+ui.month.slice(5,7)-1;
   var title, sub, sd=parse(ui.sel), isNow;
-  if(ui.view==="day"){ isNow=ui.sel===TODAY; title=isNow?"Today":DOW_LONG[sd.getDay()]+" "+sd.getDate()+" "+MONTHS[sd.getMonth()]; sub=isNow?nice(TODAY)+" "+sd.getFullYear():sd.getFullYear(); }
-  else if(ui.view==="week"){ isNow=weekStart(ui.sel).getTime()===weekStart(TODAY).getTime(); title=isNow?"This week":weekLabel(); sub=(isNow?weekLabel()+" · ":"")+weekStart(ui.sel).getFullYear(); }
-  else { isNow=ui.month===TODAY.slice(0,7); title=isNow?"This month":MONTHS[m]+" "+y; sub=isNow?MONTHS[m]+" "+y:"Today is "+nice(TODAY); }
+  if(ui.view==="day"){ isNow=ui.sel===TODAY; title=isNow?"Vandaag":cap(DOW_LONG[sd.getDay()])+" "+sd.getDate()+" "+MONTHS[sd.getMonth()]; sub=isNow?cap(nice(TODAY))+" "+sd.getFullYear():sd.getFullYear(); }
+  else if(ui.view==="week"){ isNow=weekStart(ui.sel).getTime()===weekStart(TODAY).getTime(); title=isNow?"Deze week":weekLabel(); sub=(isNow?weekLabel()+" · ":"")+weekStart(ui.sel).getFullYear(); }
+  else { isNow=ui.month===TODAY.slice(0,7); title=isNow?"Deze maand":cap(MONTHS[m])+" "+y; sub=isNow?cap(MONTHS[m])+" "+y:"Vandaag is het "+nice(TODAY); }
   var desk=isDesk();
   var body = desk
     ? (ui.view==="day" ? renderTimeGrid([ui.sel]) : ui.view==="week" ? renderTimeGrid(weekDates()) : '<div class="mlayout">'+renderMonth()+'<aside class="mside">'+renderDay()+'</aside></div>')
     : (ui.view==="day" ? renderTimeGrid([ui.sel]) : ui.view==="week" ? renderTimeGrid(weekDates()) : renderMonth()+renderDay());
   var h='<div class="wrap'+(desk?" desk":"")+'"><div class="toolbar">'+appNav()+
-    '<div class="viewbar" role="group" aria-label="Show">'+
-      [["day","Day"],["week","Week"],["month","Month"]].map(function(v){return '<button data-act="view" data-view="'+v[0]+'" aria-pressed="'+(ui.view===v[0])+'">'+v[1]+'</button>';}).join("")+
+    '<div class="viewbar" role="group" aria-label="Weergave">'+
+      [["day","Dag"],["week","Week"],["month","Maand"]].map(function(v){return '<button data-act="view" data-view="'+v[0]+'" aria-pressed="'+(ui.view===v[0])+'">'+v[1]+'</button>';}).join("")+
     '</div>'+
     '<div class="top">'+
-      '<button class="icon-btn" data-act="prev" aria-label="Previous '+ui.view+'">'+ICON.left+'</button>'+
+      '<button class="icon-btn" data-act="prev" aria-label="'+({day:"Vorige dag",week:"Vorige week",month:"Vorige maand"})[ui.view]+'">'+ICON.left+'</button>'+
       '<div class="ttl"><h1 id="ttl">'+esc(title)+'</h1><div class="sub"><span>'+esc(sub)+'</span>'+
-        (isNow?'':'<button class="back-btn" data-act="today">'+({day:"Today",week:"This week",month:"This month"})[ui.view]+'</button>')+
+        (isNow?'':'<button class="back-btn" data-act="today">'+({day:"Vandaag",week:"Deze week",month:"Deze maand"})[ui.view]+'</button>')+
       '</div></div>'+
-      '<button class="icon-btn" data-act="next" aria-label="Next '+ui.view+'">'+ICON.right+'</button>'+
+      '<button class="icon-btn" data-act="next" aria-label="'+({day:"Volgende dag",week:"Volgende week",month:"Volgende maand"})[ui.view]+'">'+ICON.right+'</button>'+
     '</div>'+
-    '<div class="filter" role="group" aria-label="Show items for">'+
-      [["all","Everyone"],["ewoud","Ewoud"],["helen","Helen"]].map(function(f){return '<button data-act="filter" data-who="'+f[0]+'" aria-pressed="'+(ui.who===f[0])+'">'+f[1]+'</button>';}).join("")+
-      '<button class="cls-toggle" data-act="classes" aria-pressed="'+ui.classes+'">Classes '+(ui.classes?"shown":"hidden")+'</button>'+
+    '<div class="filter" role="group" aria-label="Toon items voor">'+
+      [["all","Iedereen"],["ewoud","Ewoud"],["helen","Helen"]].map(function(f){return '<button data-act="filter" data-who="'+f[0]+'" aria-pressed="'+(ui.who===f[0])+'">'+f[1]+'</button>';}).join("")+
+      '<button class="cls-toggle" data-act="classes" aria-pressed="'+ui.classes+'">Lessen '+(ui.classes?"zichtbaar":"verborgen")+'</button>'+
     '</div></div>'+
     (loadState?'<div class="note"><span>'+esc(loadState)+'</span></div>':'')+
     body+
     (statusText?'<div class="status">'+esc(statusText)+'</div>':'')+
-    '<div class="foot"><span>Signed in as '+esc(userEmail)+'</span><button data-act="logout">Sign out</button></div>'+
+    '<div class="foot"><span>Ingelogd als '+esc(userEmail)+'</span><button data-act="logout">Uitloggen</button></div>'+
   '</div>'+
-  (canWrite?'<button class="fab" data-act="add">'+ICON.plus+'Add</button>':'')+
+  (canWrite?'<button class="fab" data-act="add">'+ICON.plus+'Toevoegen</button>':'')+
   (ui.sheet?renderSheet():"");
   var active=document.activeElement&&document.activeElement.id;
   var oldSc=document.getElementById("tgscroll"), keep=oldSc&&ui._lastKey===(ui._grid&&ui._grid.key)?{t:oldSc.scrollTop,l:oldSc.scrollLeft}:null;
@@ -630,17 +641,17 @@ function renderApp(){
 }
 
 /* ---------- Saving (Firebase: login + live sync) ---------- */
-var col=null, canWrite=true, loadState="Loading your calendar…", statusText="", authState="loading", loginErr="", userEmail="", stopSnap=null;
+var userName="", col=null, canWrite=true, loadState="Je kalender wordt geladen…", statusText="", authState="loading", loginErr="", userEmail="", stopSnap=null;
 var queue={};
 function write(id, body){
-  if(!col){ statusText="Can't save right now. Check your connection and try again."; render(); return; }
+  if(!col){ statusText="Opslaan lukt nu niet. Controleer je verbinding en probeer opnieuw."; render(); return; }
   var prev=queue[id]||Promise.resolve();
   queue[id]=prev.then(function(){ return body ? col.doc(id).set(body) : col.doc(id).delete(); })
-    .then(function(){ if(statusText.indexOf("didn't save")>=0){statusText="";render();} })
+    .then(function(){ if(statusText.indexOf("niet opgeslagen")>=0){statusText="";render();} })
     .catch(function(err){
       var c=err&&err.code;
-      if(c==="permission-denied"){ canWrite=false; statusText="This account can't change the calendar."; }
-      else { statusText="That change didn't save. Check your connection and try again."; }
+      if(c==="permission-denied"){ canWrite=false; statusText="Dit account kan de kalender niet aanpassen."; }
+      else { statusText="Die wijziging is niet opgeslagen. Controleer je verbinding en probeer opnieuw."; }
       render();
     });
 }
@@ -653,12 +664,12 @@ function doLogin(){
   firebase.auth().signInWithPopup(p).catch(function(err){
     var c=err&&err.code||"";
     if(c==="auth/popup-blocked"||c==="auth/operation-not-supported-in-this-environment"){ return firebase.auth().signInWithRedirect(p); }
-    if(c!=="auth/popup-closed-by-user"&&c!=="auth/cancelled-popup-request"){ loginErr="Signing in didn't work ("+c+"). Try again."; render(); }
+    if(c!=="auth/popup-closed-by-user"&&c!=="auth/cancelled-popup-request"){ loginErr="Inloggen is niet gelukt ("+c+"). Probeer opnieuw."; render(); }
   });
 }
 function start(){
   if(!(window.firebase && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey)){
-    authState="out"; loginErr="The app isn't set up yet: the Firebase settings are missing."; render(); return;
+    authState="out"; loginErr="De app is nog niet ingesteld: de Firebase-gegevens ontbreken."; render(); return;
   }
   firebase.initializeApp(window.FIREBASE_CONFIG);
   var fs=firebase.firestore();
@@ -667,17 +678,17 @@ function start(){
   firebase.auth().onAuthStateChanged(function(user){
     unsub();
     if(!user){ authState="out"; S.items=[]; render(); return; }
-    authState="in"; userEmail=user.email||""; canWrite=true; loadState="Loading your calendar…"; render();
+    authState="in"; userEmail=user.email||""; userName=cap(((user.displayName||user.email||"").split(/[\s@._]/)[0]||"").toLowerCase()); canWrite=true; loadState="Je kalender wordt geladen…"; render();
     startExpenses();
-    var t=setTimeout(function(){ loadState = S.items.length ? "Offline: showing the last saved version." : "Can't reach the calendar right now. Check your connection."; render(); },10000);
+    var t=setTimeout(function(){ loadState = S.items.length ? "Offline: je ziet de laatst opgeslagen versie." : "De kalender is nu niet bereikbaar. Controleer je verbinding."; render(); },10000);
     stopSnap=col.onSnapshot({includeMetadataChanges:true}, function(snap){
       S.items=snap.docs.map(function(doc){ var o=Object.assign({}, doc.data()); o.id=doc.id; return o; });
       if(!snap.metadata.fromCache){ clearTimeout(t); loadState=""; }
       render();
     }, function(err){
       clearTimeout(t);
-      if(err&&err.code==="permission-denied"){ loadState="The account "+userEmail+" doesn't have access to this calendar. Sign out and use Ewoud's or Helen's Google account."; canWrite=false; }
-      else { loadState="Lost the connection to the calendar. Close and reopen the app to try again."; }
+      if(err&&err.code==="permission-denied"){ loadState="Het account "+userEmail+" heeft geen toegang tot deze kalender. Log uit en gebruik het Google-account van Ewoud of Helen."; canWrite=false; }
+      else { loadState="De verbinding met de kalender is verbroken. Sluit de app en open hem opnieuw."; }
       render();
     });
   });
@@ -719,67 +730,68 @@ function stopExpenses(){ if(stopEx){ stopEx(); stopEx=null; } EX=[]; exState="lo
 function writeEx(id, body){
   if(!exCol) return;
   var p = body ? exCol.doc(id).set(body) : exCol.doc(id).delete();
-  p.catch(function(err){ statusText = err&&err.code==="permission-denied" ? "This account can't change expenses." : "That change didn't save. Check your connection and try again."; render(); });
+  p.catch(function(err){ statusText = err&&err.code==="permission-denied" ? "Dit account kan de uitgaven niet aanpassen." : "Die wijziging is niet opgeslagen. Controleer je verbinding en probeer opnieuw."; render(); });
 }
 
 function renderMoney(){
   var b=balance(), abs=Math.abs(b);
   var who = b>0 ? "helen" : "ewoud";
   var head = abs<1
-    ? '<div class="bal settled"><div class="bal-l">All settled up</div><div class="bal-n">'+money(0)+'</div></div>'
-    : '<div class="bal"><div class="bal-l"><b class="who-t who-t-'+who+'">'+PEOPLE[who].name+'</b> owes <b class="who-t who-t-'+other(who)+'">'+PEOPLE[other(who)].name+'</b></div><div class="bal-n">'+money(abs)+'</div>'+
-      (canWrite?'<button class="pill-btn" data-act="settle">Record a repayment</button>':'')+'</div>';
+    ? '<div class="bal settled"><div class="bal-l">Alles is verrekend</div><div class="bal-n">'+money(0)+'</div></div>'
+    : '<div class="bal"><div class="bal-l"><b class="who-t who-t-'+who+'">'+PEOPLE[who].name+'</b> moet <b class="who-t who-t-'+other(who)+'">'+PEOPLE[other(who)].name+'</b></div><div class="bal-n">'+money(abs)+'</div><div class="bal-l">terugbetalen</div>'+
+      (canWrite?'<button class="pill-btn" data-act="settle">Terugbetaling noteren</button>':'')+'</div>';
   var tot={ewoud:0,helen:0};
   EX.forEach(function(e){ if(e.kind!=="settle") tot[e.paidBy]+=e.amount; });
-  var stats='<div class="stats"><div><span>Ewoud paid</span><b>'+money(tot.ewoud)+'</b></div><div><span>Helen paid</span><b>'+money(tot.helen)+'</b></div></div>';
+  var stats='<div class="stats"><div><span>Ewoud betaalde</span><b>'+money(tot.ewoud)+'</b></div><div><span>Helen betaalde</span><b>'+money(tot.helen)+'</b></div></div>';
   var list="";
-  if(exState==="denied") list='<div class="empty">This account doesn\'t have access to the expenses.</div>';
-  else if(exState==="loading") list='<div class="empty">Loading expenses…</div>';
-  else if(!EX.length) list='<div class="empty">No expenses yet. Tap Add to enter the first one.</div>';
+  if(exState==="denied") list='<div class="empty">Dit account heeft geen toegang tot de uitgaven.</div>';
+  else if(exState==="loading") list='<div class="empty">Uitgaven worden geladen…</div>';
+  else if(!EX.length) list='<div class="empty">Nog geen uitgaven. Tik op Toevoegen om de eerste in te voeren.</div>';
   else {
     var last="";
     EX.forEach(function(e){
       var mk=e.date.slice(0,7);
-      if(mk!==last){ var d=parse(e.date); list+=(last?'</div>':'')+'<div class="group-h'+(last?"":" first")+'">'+MONTHS[d.getMonth()]+' '+d.getFullYear()+'</div><div class="list">'; last=mk; }
+      if(mk!==last){ var d=parse(e.date); list+=(last?'</div>':'')+'<div class="group-h'+(last?"":" first")+'">'+cap(MONTHS[d.getMonth()])+' '+d.getFullYear()+'</div><div class="list">'; last=mk; }
       list+=renderExpense(e);
     });
     list+='</div>';
   }
-  return '<div class="mny"><div class="mny-l">'+head+stats+'</div><div class="mny-r"><div class="panel-h"><h2>History</h2><span>'+EX.length+' item'+(EX.length===1?"":"s")+'</span></div>'+list+'</div></div>';
+  return '<div class="mny"><div class="mny-l">'+head+stats+'</div><div class="mny-r"><div class="panel-h"><h2>Geschiedenis</h2><span>'+EX.length+' item'+(EX.length===1?"":"s")+'</span></div>'+list+'</div></div>';
 }
 function renderExpense(e){
   var d=parse(e.date), o=owedBy(e), payer=PEOPLE[e.paidBy].name, ot=PEOPLE[other(e.paidBy)].name;
   var line = e.kind==="settle"
-    ? payer+' paid '+ot+' back'
-    : payer+' paid · '+(e.split==="full" ? ot+' owes it all' : 'split 50/50');
-  var effect = e.kind==="settle" ? 'Repayment' : ot+' owes '+money(o);
+    ? payer+' betaalde '+ot+' terug'
+    : payer+' betaalde · '+(e.split==="full" ? ot+' betaalt alles terug' : '50/50 gedeeld');
+  var effect = e.kind==="settle" ? 'Terugbetaling' : ot+' moet '+money(o)+' terugbetalen';
   return '<div class="item exp'+(e.kind==="settle"?" settle":"")+'"'+(canWrite?' data-act="editex" data-id="'+e.id+'" role="button" tabindex="0"':'')+'>'+
-    '<div class="exd"><b>'+d.getDate()+'</b><small>'+MONTHS[d.getMonth()].slice(0,3)+'</small></div>'+
-    '<div class="body"><div class="title-row"><div class="title">'+esc(e.kind==="settle"?"Repayment":e.desc)+'</div><div class="amt">'+money(e.amount)+'</div></div>'+
+    '<div class="exd"><b>'+d.getDate()+'</b><small>'+MONTHS_SHORT[d.getMonth()]+'</small></div>'+
+    '<div class="body"><div class="title-row"><div class="title">'+esc(e.kind==="settle"?"Terugbetaling":e.desc)+'</div><div class="amt">'+money(e.amount)+'</div></div>'+
     '<div class="meta">'+esc(line)+'</div>'+
-    (e.kind==="settle"?'':'<div class="meta eff eff-'+e.paidBy+'">'+esc(effect)+'</div>')+'</div></div>';
+    (e.kind==="settle"?'':'<div class="meta eff eff-'+e.paidBy+'">'+esc(effect)+'</div>')+
+    (byLine(e)?'<div class="meta"><span class="src">'+esc(byLine(e))+'</span></div>':'')+'</div></div>';
 }
 function renderExSheet(){
   var it=ui.msheet, isSettle=it.kind==="settle";
   var seg=function(name,val,label,cur){ return '<button type="button" data-act="exset" data-k="'+name+'" data-v="'+val+'" aria-pressed="'+(cur===val)+'" class="wp-'+val+'">'+label+'</button>'; };
   return '<div class="scrim" data-act="scrim"><form class="sheet" id="msheet" novalidate>'+
-    '<div class="sheet-h"><h3>'+(it.id?"Edit ":"New ")+(isSettle?"repayment":"expense")+'</h3><button type="button" class="icon-btn" data-act="close" aria-label="Close">'+ICON.close+'</button></div>'+
-    (isSettle?'':'<div class="field"><label for="x-desc">What was it for?</label><input id="x-desc" value="'+esc(it.desc)+'" placeholder="e.g. Groceries Delhaize" autocomplete="off"></div>')+
-    '<div class="field"><label for="x-amt">Amount (€)</label><input id="x-amt" inputmode="decimal" value="'+esc(it.amountStr)+'" placeholder="0,00" autocomplete="off"></div>'+
-    '<div class="field"><label>'+(isSettle?"Who paid the money back?":"Who paid?")+'</label><div class="tabs who-pick">'+seg("paidBy","ewoud","Ewoud",it.paidBy)+seg("paidBy","helen","Helen",it.paidBy)+'</div></div>'+
-    (isSettle?'':'<div class="field"><label>How to split it?</label><div class="tabs">'+seg("split","half","50/50",it.split)+seg("split","full","Pay back in full",it.split)+'</div>'+
+    '<div class="sheet-h"><h3>'+(it.id?(isSettle?"Terugbetaling wijzigen":"Uitgave wijzigen"):(isSettle?"Nieuwe terugbetaling":"Nieuwe uitgave"))+(it.id&&byLine(it)?'<small class="by">'+esc(byLine(it))+'</small>':'')+'</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
+    (isSettle?'':'<div class="field"><label for="x-desc">Waarvoor was het?</label><input id="x-desc" value="'+esc(it.desc)+'" placeholder="bv. Boodschappen Delhaize" autocomplete="off"></div>')+
+    '<div class="field"><label for="x-amt">Bedrag (€)</label><input id="x-amt" inputmode="decimal" value="'+esc(it.amountStr)+'" placeholder="0,00" autocomplete="off"></div>'+
+    '<div class="field"><label>'+(isSettle?"Wie betaalde terug?":"Wie betaalde?")+'</label><div class="tabs who-pick">'+seg("paidBy","ewoud","Ewoud",it.paidBy)+seg("paidBy","helen","Helen",it.paidBy)+'</div></div>'+
+    (isSettle?'':'<div class="field"><label>Hoe verdelen?</label><div class="tabs">'+seg("split","half","50/50",it.split)+seg("split","full","Alles terugbetalen",it.split)+'</div>'+
       '<p class="hint">'+esc(splitHint(it))+'</p></div>')+
-    '<div class="field"><label for="x-date">Date</label><input id="x-date" type="date" value="'+esc(it.date)+'"></div>'+
+    '<div class="field"><label for="x-date">Datum</label><input id="x-date" type="date" value="'+esc(it.date)+'"></div>'+
     '<p class="err" role="alert">'+esc(ui.err)+'</p>'+
-    '<div class="actions">'+(it.id?'<button type="button" class="del'+(ui.armed?" armed":"")+'" data-act="delex">'+(ui.armed?"Tap again to delete":"Delete")+'</button>':'')+
-    '<button type="submit" class="primary">'+(it.id?"Save changes":(isSettle?"Save repayment":"Add expense"))+'</button></div>'+
+    '<div class="actions">'+(it.id?'<button type="button" class="del'+(ui.armed?" armed":"")+'" data-act="delex">'+(ui.armed?"Tik nogmaals om te verwijderen":"Verwijderen")+'</button>':'')+
+    '<button type="submit" class="primary">'+(it.id?"Wijzigingen opslaan":(isSettle?"Terugbetaling opslaan":"Uitgave toevoegen"))+'</button></div>'+
   '</form></div>';
 }
 function splitHint(it){
   if(!it.paidBy||!it.split) return "";
   var c=parseAmount(it.amountStr), o=PEOPLE[other(it.paidBy)].name;
   var share = isNaN(c) ? "" : " ("+money(it.split==="full"?c:Math.round(c/2))+")";
-  return it.split==="full" ? o+" pays back the whole amount"+share+"." : o+" pays back half"+share+".";
+  return it.split==="full" ? o+" betaalt het volledige bedrag terug"+share+"." : o+" betaalt de helft terug"+share+".";
 }
 function readExForm(){
   var it=ui.msheet, g=function(id){var e=document.getElementById(id);return e?e.value.trim():null;};
@@ -790,7 +802,7 @@ function readExForm(){
 }
 function openEx(kind, src){
   var b=balance();
-  ui.msheet = src ? {id:src.id, kind:src.kind||"expense", desc:src.desc||"", amountStr:amountStr(src.amount), paidBy:src.paidBy, split:src.split||"half", date:src.date, createdAt:src.createdAt, createdBy:src.createdBy}
+  ui.msheet = src ? {id:src.id, kind:src.kind||"expense", desc:src.desc||"", amountStr:amountStr(src.amount), paidBy:src.paidBy, split:src.split||"half", date:src.date, createdAt:src.createdAt, createdBy:src.createdBy, addedBy:src.addedBy||"", editedBy:src.editedBy||""}
     : kind==="settle" ? {kind:"settle", desc:"", amountStr:Math.abs(b)>=1?amountStr(Math.abs(b)):"", paidBy:b>0?"helen":b<0?"ewoud":"", split:"", date:TODAY}
     : {kind:"expense", desc:"", amountStr:"", paidBy:"", split:"", date:TODAY};
   ui.err=""; ui.armed=false; render();
@@ -798,12 +810,13 @@ function openEx(kind, src){
 }
 function submitEx(){
   readExForm(); var it=ui.msheet, c=parseAmount(it.amountStr);
-  if(it.kind!=="settle" && !it.desc){ ui.err="Say what it was for."; render(); return; }
-  if(isNaN(c)||c<=0){ ui.err="Enter an amount, like 12,50."; render(); return; }
-  if(!it.paidBy){ ui.err="Choose who paid."; render(); return; }
-  if(it.kind!=="settle" && !it.split){ ui.err="Choose 50/50 or pay back in full."; render(); return; }
+  if(it.kind!=="settle" && !it.desc){ ui.err="Vul in waarvoor het was."; render(); return; }
+  if(isNaN(c)||c<=0){ ui.err="Vul een bedrag in, bv. 12,50."; render(); return; }
+  if(!it.paidBy){ ui.err="Kies wie betaalde."; render(); return; }
+  if(it.kind!=="settle" && !it.split){ ui.err="Kies 50/50 of alles terugbetalen."; render(); return; }
   var body={kind:it.kind, desc:it.kind==="settle"?"":it.desc, amount:c, paidBy:it.paidBy, date:it.date,
-    createdAt:it.createdAt||new Date().toISOString(), createdBy:it.createdBy||userEmail};
+    createdAt:it.createdAt||new Date().toISOString(), createdBy:it.createdBy||userEmail, addedBy:it.addedBy||userName};
+  if(it.id && userName) body.editedBy=userName;
   if(it.kind!=="settle") body.split=it.split;
   var id=it.id||uid();
   var idx=EX.findIndex(function(e){return e.id===id;}), rec=Object.assign({id:id},body);
@@ -879,14 +892,14 @@ document.addEventListener("submit",function(e){
   e.preventDefault();
   if(e.target.id==="msheet"){ submitEx(); return; }
   readForm(); var it=ui.sheet;
-  if(!it.who){ui.err="Choose who it's for: Ewoud, Helen or both."; render(); return;}
-  if(!it.title){ui.err="Give it a title first."; render(); return;}
-  if(!it.date){ui.err="Pick a date."; render(); return;}
-  if(it.type==="event"&&it.start&&it.end&&it.end<it.start){ui.err="The end time is before the start time."; render(); return;}
+  if(!it.who){ui.err="Kies voor wie het is: Ewoud, Helen of beiden."; render(); return;}
+  if(!it.title){ui.err="Geef eerst een titel op."; render(); return;}
+  if(!it.date){ui.err="Kies een datum."; render(); return;}
+  if(it.type==="event"&&it.start&&it.end&&it.end<it.start){ui.err="Het einde ligt voor het begin."; render(); return;}
   if(it.type==="task"){delete it.end; delete it.location; delete it.color;}
   delete it.example;
-  if(!it.id){ it.id=uid(); S.items.push(it); }
-  else { S.items=S.items.map(function(i){return i.id===it.id?it:i;}); }
+  if(!it.id){ it.id=uid(); if(userName) it.addedBy=userName; S.items.push(it); }
+  else { if(userName) it.editedBy=userName; S.items=S.items.map(function(i){return i.id===it.id?it:i;}); }
   write(it.id, clean(it));
   ui.sel=it.date; ui.month=it.date.slice(0,7); ui.sheet=null; ui.armed=false;
   if(ui.who!=="all" && it.who!==ui.who && it.who!=="both") ui.who="all";

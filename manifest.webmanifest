@@ -1,6 +1,6 @@
 {
-  "name": "My Calendar",
-  "short_name": "Calendar",
+  "name": "Onze kalender",
+  "short_name": "Kalender",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
