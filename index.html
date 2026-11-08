@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#f3f4f8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0f111a" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
-<script>try{var t=localStorage.getItem("cal-theme-last");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
+<script>try{var t=localStorage.getItem("cal-theme-last");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);window.__accent=localStorage.getItem("cal-accent-last")||"";}catch(e){}</script>
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Onze kalender</title>
@@ -65,7 +65,7 @@ button{cursor:pointer}
 .day .n{width:28px;height:28px;line-height:28px;border-radius:50%;font-weight:500;font-size:14px}
 .day.out .n{color:var(--muted);opacity:.5}
 .day.today .n{box-shadow:inset 0 0 0 2px var(--accent);color:var(--accent);font-weight:600}
-.day.sel .n{background:var(--accent);color:#fff;box-shadow:none}
+.day.sel .n{background:var(--accent);color:var(--on-accent,#fff);box-shadow:none}
 .day:hover .n{background:var(--accent-soft)}
 .day.sel:hover .n{background:var(--accent)}
 .marks{display:flex;gap:3px;height:6px}
@@ -102,13 +102,13 @@ button{cursor:pointer}
 .status{font-size:12px;color:var(--muted);text-align:center}
 .viewbar{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;position:sticky;top:calc(8px + env(safe-area-inset-top));z-index:5;box-shadow:0 4px 14px rgba(20,25,50,.06)}
 .viewbar button{border:0;background:transparent;padding:9px 4px;border-radius:9px;font-weight:600;font-size:14px;color:var(--muted)}
-.viewbar button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.viewbar button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent,#fff)}
 .none{color:var(--muted);font-size:13px;padding:2px 2px 4px}
 .group-h.is-today{color:var(--accent)}
 .login{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px 24px;text-align:center}
 .login h1{font:700 30px/1.1 var(--display);margin:0}
 .login p{color:var(--muted);margin:0;max-width:30ch}
-.login .primary{height:50px;padding:0 24px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:600;font-size:16px}
+.login .primary{height:50px;padding:0 24px;border:0;border-radius:12px;background:var(--accent);color:var(--on-accent,#fff);font-weight:600;font-size:16px}
 .foot{display:flex;justify-content:center;gap:8px;font-size:12px;color:var(--muted);padding-top:8px;flex-wrap:wrap}
 .foot button{border:0;background:none;color:var(--accent);font-size:12px;padding:0;text-decoration:underline}
 .appnav{display:grid;grid-template-columns:1fr 1fr auto;gap:6px}
@@ -166,7 +166,7 @@ button{cursor:pointer}
   .wrap.desk .day:hover{background:var(--accent-soft)}
   .wrap.desk .day:hover .n{background:transparent}
   .wrap.desk .day.sel{background:color-mix(in srgb,var(--accent) 9%,transparent)}
-  .wrap.desk .day.sel .n{background:var(--accent);color:#fff}
+  .wrap.desk .day.sel .n{background:var(--accent);color:var(--on-accent,#fff)}
   .wrap.desk .marks{flex-direction:column;height:auto;gap:3px}
   .mchip{display:block;text-align:left;font-size:11.5px;line-height:1.3;padding:2px 6px;border-radius:5px;background:color-mix(in srgb,var(--c) 15%,var(--surface));border-left:3px solid var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
   .mchip b{font-weight:600;font-variant-numeric:tabular-nums}
@@ -216,7 +216,7 @@ button{cursor:pointer}
 .tg-dh b{font:700 20px/1 var(--display);color:var(--ink)}
 .tg-dh:hover{background:var(--accent-soft)}
 .tg-dh.today{color:var(--accent)}
-.tg-dh.today b{background:var(--accent);color:#fff;border-radius:8px;padding:3px 7px}
+.tg-dh.today b{background:var(--accent);color:var(--on-accent,#fff);border-radius:8px;padding:3px 7px}
 .tg-all{border-bottom:1px solid var(--line);min-height:36px}
 .tg-all.empty{min-height:0}
 .tg-all.empty .tg-allcell{padding:3px}
@@ -271,7 +271,7 @@ button{cursor:pointer}
 .item.anniv .cake{background:var(--bday);color:#fff}
 .mchip .hrt{display:inline-grid;vertical-align:-2px;margin-right:3px;color:var(--bday)} .mchip .hrt svg{width:11px;height:11px}
 .marks i.h{width:9px;height:9px;background:none;color:var(--bday);display:grid} .marks i.h svg{width:9px;height:9px}
-.now-btn{flex:none;height:38px;display:flex;align-items:center;gap:6px;padding:0 12px;border-radius:10px;border:0;background:var(--accent);color:#fff;font-weight:600;font-size:14px;white-space:nowrap}
+.now-btn{flex:none;height:38px;display:flex;align-items:center;gap:6px;padding:0 12px;border-radius:10px;border:0;background:var(--accent);color:var(--on-accent,#fff);font-weight:600;font-size:14px;white-space:nowrap}
 .now-btn svg{width:16px;height:16px}
 .now-btn[aria-current="true"]{background:var(--accent-soft);color:var(--accent)}
 @media (max-width:420px){ .now-btn{padding:0 10px;font-size:13px} .now-btn svg{display:none} }
@@ -288,6 +288,38 @@ button{cursor:pointer}
 .te-linked small{font-size:12px;color:var(--muted)}
 .te-actions{display:flex;gap:8px;width:100%}
 .pill-btn.danger{color:var(--danger)}
+.gear{position:fixed;left:max(16px,calc(50% - 264px));bottom:calc(20px + env(safe-area-inset-bottom));width:54px;height:54px;border-radius:27px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;box-shadow:0 6px 18px rgba(20,25,50,.14);z-index:6}
+.gear svg{width:24px;height:24px;transition:transform .25s}
+.gear[aria-expanded="true"] svg{transform:rotate(60deg)}
+.wrap.desk ~ .gear{left:28px;bottom:24px}
+.menu-scrim{position:fixed;inset:0;z-index:7}
+.menu{position:fixed;left:max(16px,calc(50% - 264px));bottom:calc(84px + env(safe-area-inset-bottom));width:min(320px,calc(100vw - 32px));max-height:calc(100% - 120px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px rgba(15,20,45,.25);z-index:8;padding:8px}
+.wrap.desk ~ .menu{left:28px;bottom:90px}
+@media (prefers-reduced-motion:no-preference){.menu{animation:pop .16s ease-out;transform-origin:bottom left}@keyframes pop{from{transform:scale(.96) translateY(6px);opacity:0}to{transform:none;opacity:1}}}
+.menu-sec{padding:10px 8px;display:flex;flex-direction:column;gap:8px}
+.menu-sec+.menu-sec{border-top:1px solid var(--line)}
+.menu h4{margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.acct{display:flex;align-items:center;gap:10px}
+.acct .av{width:36px;height:36px;border-radius:50%;background:var(--accent);color:var(--on-accent,#fff);display:grid;place-items:center;font-weight:700}
+.acct b{display:block;font-size:15px}
+.acct small{display:block;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.menu-row{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;padding:9px 8px;border-radius:10px;font-weight:500;text-align:left}
+.menu-row:hover{background:var(--accent-soft)}
+.menu-row svg{width:18px;height:18px;color:var(--muted)}
+.menu-row span{flex:1}
+.menu-row em{font-style:normal;font-size:12px;color:var(--muted)}
+.tabs.mini button{display:flex;align-items:center;justify-content:center;gap:6px;padding:7px}
+.tabs.mini svg{width:16px;height:16px}
+.lbl{font-size:13px;font-weight:600;color:var(--muted);margin-top:4px}
+.swatch-row{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.sw{aspect-ratio:1;border-radius:50%;border:0;padding:0}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+.own{display:flex;align-items:center;gap:10px}
+.own-pick{position:relative;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:6px 10px 6px 6px;cursor:pointer;font-size:14px;font-weight:500}
+.own-pick::before{content:"";width:24px;height:24px;border-radius:7px;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);box-shadow:inset 0 0 0 5px var(--pick)}
+.own-pick input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.own code{font-size:12px;color:var(--muted)}
+.link{border:0;background:none;color:var(--accent);text-decoration:underline;font-size:13px;padding:0;margin-left:auto}
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -305,7 +337,7 @@ button{cursor:pointer}
 .who-pick button.wp-helen[aria-pressed="true"]{background:var(--he-soft);color:var(--he)}
 .who-pick button.wp-both[aria-pressed="true"]{background:linear-gradient(90deg,var(--ew-soft),var(--he-soft));color:var(--ink)}
 
-.fab{position:fixed;right:max(16px,calc(50% - 264px));bottom:calc(20px + env(safe-area-inset-bottom));height:54px;padding:0 22px 0 18px;border-radius:27px;border:0;background:var(--accent);color:#fff;font-weight:600;font-size:16px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(30,45,120,.28)}
+.fab{position:fixed;right:max(16px,calc(50% - 264px));bottom:calc(20px + env(safe-area-inset-bottom));height:54px;padding:0 22px 0 18px;border-radius:27px;border:0;background:var(--accent);color:var(--on-accent,#fff);font-weight:600;font-size:16px;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(30,45,120,.28)}
 .fab svg{width:20px;height:20px}
 
 .scrim{position:fixed;inset:0;background:rgba(10,12,22,.45);display:flex;align-items:flex-end;justify-content:center;z-index:10}
@@ -323,7 +355,7 @@ button{cursor:pointer}
 .swatches button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
 .err{color:var(--danger);font-size:13px;min-height:1em;margin:-4px 0 0}
 .actions{display:flex;gap:10px}
-.actions .primary{flex:1;height:48px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:600}
+.actions .primary{flex:1;height:48px;border:0;border-radius:12px;background:var(--accent);color:var(--on-accent,#fff);font-weight:600}
 .actions .del{height:48px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--danger);font-weight:600}
 .actions .del.armed{background:var(--danger);color:#fff;border-color:var(--danger)}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}}
@@ -378,6 +410,9 @@ var ICON = {
   heart:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/></svg>',
   sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
   moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  logout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>',
+  link:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
   cake:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21h16M5 21v-7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7"/><path d="M5 16c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 4.5 0"/><path d="M12 12V8M12 4.5c.6.8.6 1.6 0 2.2-.6-.6-.6-1.4 0-2.2z"/></svg>',
   tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -546,6 +581,7 @@ document.addEventListener("input",function(e){
   var n=document.getElementById(t.id+"-n"); if(n&&iso) n.value=iso;
 });
 document.addEventListener("change",function(e){
+  if(e.target.id==="accent-pick"){ setAccent(e.target.value,true); render(); return; }
   var t=e.target; if(!t.classList||!t.classList.contains("native")) return;
   var txt=document.getElementById(t.id.slice(0,-2)); if(txt&&t.value){ txt.value=fmtBE(t.value); txt.dispatchEvent(new Event("input",{bubbles:true})); }
 });
@@ -705,7 +741,7 @@ function placeGrid(keep){
 }
 /* Move the red line every minute (and roll over to a new day at midnight). */
 setInterval(function(){
-  if(authState!=="in" || ui.sheet || ui.msheet || ui.ssheet) return;
+  if(authState!=="in" || ui.sheet || ui.msheet || ui.ssheet || ui.menu) return;
   var t=iso(new Date()); if(t!==TODAY){ if(ui.sel===TODAY) ui.sel=t; TODAY=t; ui.month=ui.sel.slice(0,7); }
   if(ui.tab==="cal" && /^(day|week)$/.test(ui.view)) render();
 }, 60000);
@@ -784,14 +820,62 @@ function applyTheme(t){
   if(t==="light"||t==="dark") document.documentElement.setAttribute("data-theme",t); else document.documentElement.removeAttribute("data-theme");
   var c=curTheme()==="dark"?"#0f111a":"#f3f4f8";
   document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){ m.setAttribute("content",c); });
+  if(typeof userAccent!=="undefined" && userAccent) applyAccent(userAccent);
 }
 function loadTheme(user){
   themeUid=user.uid||"";
   try{ var local=localStorage.getItem("cal-theme-"+themeUid); if(local){ applyTheme(local); localStorage.setItem("cal-theme-last",local); } }catch(e){}
+  try{ var la=localStorage.getItem("cal-accent-"+themeUid); if(la!=null) setAccent(la,false); }catch(e){}
   firebase.firestore().doc("settings/prefs-"+themeUid).get().then(function(d){
-    var t=d.exists&&d.data().theme;
+    var t=d.exists&&d.data().theme, ac=d.exists?d.data().accent:undefined;
+    if(ac!==undefined){ setAccent(ac||"",false); render(); }
     if(t==="light"||t==="dark"){ applyTheme(t); try{ localStorage.setItem("cal-theme-"+themeUid,t); localStorage.setItem("cal-theme-last",t); }catch(e){} render(); }
   }).catch(function(){});
+}
+/* ---------- Own colour (RGB), remembered per account ---------- */
+var userAccent="";
+var PRESETS=["#3552d4","#16707f","#2b9469","#b8457a","#d23f66","#8457d1","#c46a10","#334155"];
+function hexRgb(h){ var m=String(h||"").match(/^#?([0-9a-f]{6})$/i); if(!m) return null; var n=parseInt(m[1],16); return [n>>16&255,n>>8&255,n&255]; }
+function rgbHex(r){ return "#"+r.map(function(v){ v=Math.max(0,Math.min(255,Math.round(v))); return (v<16?"0":"")+v.toString(16); }).join(""); }
+function lum(r){ var c=r.map(function(v){ v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); }); return .2126*c[0]+.7152*c[1]+.0722*c[2]; }
+function applyAccent(hex){
+  var st=document.documentElement.style, rgb=hexRgb(hex);
+  if(!rgb){ ["--accent","--accent-soft","--on-accent"].forEach(function(k){ st.removeProperty(k); }); return; }
+  var dark=curTheme()==="dark";
+  /* in dark mode, lift dark colours so they stay readable on the dark background */
+  var a = dark && lum(rgb)<.18 ? rgbHex(rgb.map(function(v){ return v+(255-v)*.38; })) : rgbHex(rgb);
+  st.setProperty("--accent", a);
+  st.setProperty("--accent-soft", "color-mix(in srgb, "+a+" "+(dark?"26%":"14%")+", var(--surface))");
+  st.setProperty("--on-accent", lum(hexRgb(a))>.45 ? "#14161f" : "#ffffff");
+}
+function setAccent(hex, save){
+  userAccent=hex||""; applyAccent(userAccent);
+  try{ localStorage.setItem("cal-accent-last",userAccent); if(themeUid) localStorage.setItem("cal-accent-"+themeUid,userAccent); }catch(e){}
+  if(save && themeUid && window.firebase) firebase.firestore().doc("settings/prefs-"+themeUid).set({accent:userAccent, name:userName||userEmail},{merge:true}).catch(function(){});
+}
+if(window.__accent) setAccent(window.__accent,false);
+
+function renderMenu(){
+  if(!ui.menu) return "";
+  var dark=curTheme()==="dark", linked=["ewoud","helen"].filter(function(w){return TE[w];}).length;
+  var cur=(userAccent||PRESETS[0]).toLowerCase();
+  return '<div class="menu-scrim" data-act="menu-close"></div><div class="menu" role="dialog" aria-label="Instellingen">'+
+    '<div class="menu-sec"><h4>Account</h4>'+
+      '<div class="acct"><span class="av">'+esc((userName||"?").charAt(0))+'</span><div><b>'+esc(userName||"")+'</b><small>'+esc(userEmail)+'</small></div></div>'+
+      '<button class="menu-row" data-act="logout">'+ICON.logout+'<span>Uitloggen</span></button>'+
+    '</div>'+
+    '<div class="menu-sec"><h4>Weergave</h4>'+
+      '<div class="tabs mini" role="group" aria-label="Modus"><button data-act="mode" data-mode="light" aria-pressed="'+(!dark)+'">'+ICON.sun+'Licht</button><button data-act="mode" data-mode="dark" aria-pressed="'+dark+'">'+ICON.moon+'Donker</button></div>'+
+      '<label class="lbl">Kleur van de app</label>'+
+      '<div class="swatch-row">'+PRESETS.map(function(c){ return '<button class="sw" style="background:'+c+'" data-act="accent" data-c="'+c+'" aria-label="Kleur '+c+'" aria-pressed="'+(cur===c)+'"></button>'; }).join("")+'</div>'+
+      '<div class="own"><label class="own-pick" style="--pick:'+esc(cur)+'"><input type="color" id="accent-pick" value="'+esc(cur)+'" aria-label="Eigen kleur kiezen"><span>Eigen kleur</span></label>'+
+        '<code id="accent-hex">'+esc(cur.toUpperCase())+'</code>'+
+        (userAccent?'<button class="link" data-act="accent-reset">Standaard</button>':'')+'</div>'+
+    '</div>'+
+    '<div class="menu-sec"><h4>Koppelingen</h4>'+
+      '<button class="menu-row" data-act="te-open">'+ICON.link+'<span>TimeEdit koppelen</span><em>'+linked+'/2</em></button>'+
+    '</div>'+
+  '</div>';
 }
 function toggleTheme(){
   var t=curTheme()==="dark"?"light":"dark";
@@ -809,10 +893,10 @@ function appNav(){
 function renderMoneyApp(){
   var h='<div class="wrap'+(isDesk()?" desk":"")+'"><div class="toolbar">'+appNav()+'</div>'+renderMoney()+
     (statusText?'<div class="status">'+esc(statusText)+'</div>':'')+
-    '<div class="foot"><span>Ingelogd als '+esc(userEmail)+'</span><button data-act="logout">Uitloggen</button></div>'+
   '</div>'+
   (canWrite?'<button class="fab" data-act="addex">'+ICON.plus+'Toevoegen</button>':'')+
-  (ui.msheet?renderExSheet():"");
+  '<button class="gear" data-act="menu" aria-label="Instellingen" aria-expanded="'+(!!ui.menu)+'">'+ICON.gear+'</button>'+renderMenu()+
+  (ui.msheet?renderExSheet():"")+(ui.ssheet?renderTESheet():"");
   var active=document.activeElement&&document.activeElement.id;
   document.getElementById("root").innerHTML=h;
   if(active){var el=document.getElementById(active); if(el) el.focus();}
@@ -848,9 +932,9 @@ function renderApp(){
     upcomingBdays()+
     body+
     (statusText?'<div class="status">'+esc(statusText)+'</div>':'')+
-    '<div class="foot"><span>Ingelogd als '+esc(userEmail)+'</span><button data-act="logout">Uitloggen</button><button data-act="te-open">TimeEdit koppelen'+(TE.state==="ready"?' ('+(["ewoud","helen"].filter(function(w){return TE[w];}).length)+'/2)':'')+'</button></div>'+
   '</div>'+
   (canWrite?'<button class="fab" data-act="add">'+ICON.plus+'Toevoegen</button>':'')+
+  '<button class="gear" data-act="menu" aria-label="Instellingen" aria-expanded="'+(!!ui.menu)+'">'+ICON.gear+'</button>'+renderMenu()+
   (ui.sheet?renderSheet():"")+(ui.ssheet?renderTESheet():"");
   var active=document.activeElement&&document.activeElement.id;
   var oldSc=document.getElementById("tgscroll"), keep=oldSc&&ui._lastKey===(ui._grid&&ui._grid.key)?{t:oldSc.scrollTop,l:oldSc.scrollLeft}:null;
@@ -1070,7 +1154,12 @@ document.addEventListener("click",function(e){
   switch(act){
     case "login": doLogin(); break;
     case "theme": toggleTheme(); break;
-    case "logout": unsub(); firebase.auth().signOut(); break;
+    case "menu": ui.menu=!ui.menu; render(); break;
+    case "menu-close": ui.menu=false; render(); break;
+    case "mode": if(curTheme()!==t.dataset.mode) toggleTheme(); break;
+    case "accent": setAccent(t.dataset.c,true); render(); break;
+    case "accent-reset": setAccent("",true); render(); break;
+    case "logout": ui.menu=false; unsub(); themeUid=""; firebase.auth().signOut(); break;
     case "pickdate":
       var nat=document.getElementById(t.dataset.for+"-n");
       if(nat){ try{ nat.showPicker(); }catch(err){ nat.focus(); nat.click(); } } break;
@@ -1091,7 +1180,7 @@ document.addEventListener("click",function(e){
     case "edit": if(!canWrite) break; var src=S.items.find(function(i){return i.id===t.dataset.id;}); if(src){ var cp=JSON.parse(JSON.stringify(src)); if(cp.type==="birthday"&&cp.yearKnown===false) cp.date=cp.date; openSheet(cp); } break;
     case "toggle": e.stopPropagation(); if(!canWrite) break; var it=S.items.find(function(i){return i.id===t.dataset.id;}); if(it){ var c=JSON.parse(JSON.stringify(it)); c.done=!c.done; it.done=c.done; write(c.id, clean(c)); render(); } break;
     case "close": ui.sheet=null; ui.msheet=null; ui.ssheet=null; render(); break;
-    case "te-open": ui.ssheet={}; ui.err=""; render(); break;
+    case "te-open": ui.menu=false; ui.ssheet={}; ui.err=""; render(); break;
     case "te-edit": readTEForm(); ui.ssheet[t.dataset.w]=""; render(); var f=document.getElementById("te-"+t.dataset.w); if(f) f.focus(); break;
     case "te-remove": readTEForm(); ui.ssheet[t.dataset.w]=""; ui.ssheet["rm_"+t.dataset.w]=true; render(); break;
     case "tab": ui.tab=t.dataset.tab; ui.sheet=null; ui.msheet=null; saveUI(); render(); window.scrollTo(0,0); break;
@@ -1112,10 +1201,12 @@ document.addEventListener("click",function(e){
   }
 });
 document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"&&ui.menu){ui.menu=false;render();return;}
   if(e.key==="Escape"&&(ui.sheet||ui.msheet||ui.ssheet)){ui.sheet=null;ui.msheet=null;ui.ssheet=null;render();return;}
   if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches('.item[data-act="edit"],.item[data-act="editex"]')){e.preventDefault();e.target.click();}
 });
 document.addEventListener("input",function(e){
+  if(e.target.id==="accent-pick"){ applyAccent(e.target.value); userAccent=e.target.value; var hx=document.getElementById("accent-hex"); if(hx) hx.textContent=e.target.value.toUpperCase(); var op=e.target.closest(".own-pick"); if(op) op.style.setProperty("--pick",e.target.value); return; }
   if(e.target.id==="x-amt"&&ui.msheet){ ui.msheet.amountStr=e.target.value; var h=document.querySelector("#msheet .hint"); if(h) h.textContent=splitHint(ui.msheet); }
 });
 document.addEventListener("submit",function(e){
