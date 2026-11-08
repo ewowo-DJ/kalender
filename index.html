@@ -328,6 +328,47 @@ button{cursor:pointer}
 .mchip.dual{position:relative;border-left:0 !important;padding-left:9px}
 .mchip.dual::before{width:3px}
 .bar.dual{background:linear-gradient(var(--c) 50%,var(--c2) 50%) !important}
+@media (max-width:899px){
+  .wrap{gap:10px;padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:calc(86px + env(safe-area-inset-bottom))}
+  .appnav button{height:38px;font-size:14px;border-radius:11px}
+  .viewbar{position:static;padding:3px;box-shadow:none}
+  .viewbar button{padding:6px 4px;font-size:13px}
+  .top{gap:8px}
+  .top .icon-btn{width:34px;height:34px}
+  .now-btn{height:34px}
+  .ttl .sub{font-size:12px;margin-top:0}
+  .filter{gap:5px;flex-wrap:nowrap}
+  .filter button{padding:4px 11px;font-size:13px;white-space:nowrap}
+  .fab{width:54px;padding:0;justify-content:center}
+  .fab span{display:none}
+  .fab svg{width:24px;height:24px}
+  .gear{width:54px;height:54px}
+  .tg-phone .tg-scroll{max-height:none;min-height:0}
+  /* week on a phone: all 7 days side by side */
+  .tg-compact .tg-dh{padding:4px 0;gap:1px}
+  .tg-compact .tg-dh span{font-size:10px}
+  .tg-compact .tg-dh b{font-size:15px}
+  .tg-compact .tg-dh.today b{padding:1px 5px;border-radius:6px}
+  .tg-compact .tg-corner{font-size:9px}
+  .tg-compact .tg-all{min-height:0}
+  .tg-compact .tg-allcell{padding:2px;gap:2px}
+  .tg-compact .chip{font-size:9px;padding:1px 3px;gap:2px;border-left-width:2px;border-radius:4px}
+  .tg-compact .chip em,.tg-compact .chip .ck{display:none}
+  .tg-compact .mini-check{width:10px;height:10px;border-width:1px;border-radius:3px}
+  .tg-compact .tg-times span{font-size:9px;right:3px;top:-6px}
+  .tg-compact .tg-times div:first-child span{top:1px}
+  .tg-compact .tg-times .nowlabel{font-size:8px;padding:0 2px;right:1px;border-radius:3px}
+  .tg-compact .blk{padding:2px 3px;border-left-width:3px;border-radius:4px;gap:0}
+  .tg-compact .blk.dual{padding-left:5px}
+  .tg-compact .blk.dual::before{width:3px}
+  .tg-compact .blk-t,.tg-compact .blk-l{display:none}
+  .tg-compact .blk-n{font-size:9.5px;line-height:1.15;font-weight:600;overflow-wrap:anywhere;hyphens:auto}
+  .tg-compact .blk.short .blk-n{white-space:normal}
+  .tg-compact .blk.short{flex-direction:column;align-items:stretch;padding:2px 3px}
+  .tg-compact .blk.short .blk-n{font-size:9.5px;white-space:normal;overflow:hidden}
+  .tg-compact .blk.narrow{padding:3px 1px;align-items:center}
+  .tg-compact .blk.narrow .blk-n{writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:100%;hyphens:manual}
+}
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -629,7 +670,7 @@ function renderSheet(){
 
 function fitTitle(){
   var el=document.getElementById("ttl"); if(!el) return;
-  var size=26; el.style.fontSize=size+"px";
+  var size=isDesk()?26:22; el.style.fontSize=size+"px";
   var r=document.createRange(); r.selectNodeContents(el);
   var over=function(){ return r.getBoundingClientRect().width > el.getBoundingClientRect().width - 2; };
   while(over() && size>14){ size--; el.style.fontSize=size+"px"; }
@@ -692,17 +733,19 @@ function renderTimeGrid(dates){
     if(i.type==="event" && s!=null){ lo=Math.min(lo, Math.floor(s/60)*60); hi=Math.max(hi, Math.ceil(((e!=null&&e>s)?e:s+60)/60)*60); }
   }); });
   hi=Math.min(hi,24*60);
-  var hours=(hi-lo)/60, height=hours*HOUR;
-  var desk=isDesk(), tcol=desk?64:50;
-  var cols=tcol+"px repeat("+dates.length+", minmax("+(desk||dates.length===1?0:116)+"px,1fr))";
+  var desk=isDesk(), compact=!desk&&dates.length>1;
+  var HP = desk ? HOUR : (ui.hp||36);
+  var hours=(hi-lo)/60, height=hours*HP;
+  var tcol=desk?64:(compact?30:44);
+  var cols=tcol+"px repeat("+dates.length+", minmax(0,1fr))";
 
-  var head='<div class="tg-row tg-head" style="grid-template-columns:'+cols+'"><div class="tg-corner">W'+isoWeek(dates[0])+'</div>'+
+  var head='<div class="tg-row tg-head" style="grid-template-columns:'+cols+'"><div class="tg-corner">'+(compact?'':'W')+isoWeek(dates[0])+'</div>'+
     dates.map(function(d){ var dd=parse(d);
       return '<button class="tg-dh'+(d===TODAY?" today":"")+'" data-act="goday" data-date="'+d+'"><span>'+DOW_SHORT[dd.getDay()]+'</span><b>'+dd.getDate()+'</b><small>'+MONTHS_SHORT[dd.getMonth()]+'</small></button>';
     }).join("")+'</div>';
 
   var hasAll=false;
-  var allday='<div class="tg-row tg-all" style="grid-template-columns:'+cols+'"><div class="tg-corner sm">Hele dag<br>& taken</div>'+
+  var allday='<div class="tg-row tg-all" style="grid-template-columns:'+cols+'"><div class="tg-corner sm">'+(compact?'':'Hele dag<br>& taken')+'</div>'+
     perDay.map(function(its,k){
       var list=its.filter(function(i){ return i.type==="task" || mins(i.start)==null; });
       if(list.length) hasAll=true;
@@ -715,9 +758,9 @@ function renderTimeGrid(dates){
     }).join("")+'</div>';
 
   var now=new Date(), nowM=now.getHours()*60+now.getMinutes(), showNow=dates.indexOf(TODAY)>=0 && nowM>=lo && nowM<=hi;
-  var nowTop=(nowM-lo)/60*HOUR;
+  var nowTop=(nowM-lo)/60*HP;
   var times='<div class="tg-times">';
-  for(var h=lo/60; h<hi/60; h++) times+='<div style="height:'+HOUR+'px"><span>'+pad(h)+':00</span></div>';
+  for(var h=lo/60; h<hi/60; h++) times+='<div style="height:'+HP+'px"><span>'+pad(h)+(compact?'':':00')+'</span></div>';
   if(showNow) times+='<b class="nowlabel" style="top:'+nowTop+'px">'+pad(now.getHours())+':'+pad(now.getMinutes())+'</b>';
   times+='</div>';
 
@@ -728,7 +771,7 @@ function renderTimeGrid(dates){
       });
       layoutDay(evs);
       var blocks=evs.map(function(ev){
-        var i=ev.i, te=i.source==="timeedit", top=(ev.s-lo)/60*HOUR, hgt=Math.max((ev.e-ev.s)/60*HOUR-2, 22);
+        var i=ev.i, te=i.source==="timeedit", top=(ev.s-lo)/60*HP, hgt=Math.max((ev.e-ev.s)/60*HP-2, compact?14:22);
         var w=100/ev.ncol, left=ev.col*w, short=hgt<52;
         var du=dual(i);
         return '<div class="blk'+(te?" te":"")+du.cls+(short?" short":"")+(ev.ncol>1&&dates.length>1?" narrow":"")+'" style="--c:'+evColor(i)+du.css+';top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 2px);width:calc('+w+'% - 4px)"'+
@@ -738,18 +781,30 @@ function renderTimeGrid(dates){
           (i.location&&!short?'<div class="blk-l" lang="nl">'+esc(i.location)+'</div>':'')+
         '</div>';
       }).join("");
-      var line = dates[k]===TODAY && nowM>=lo && nowM<=hi ? '<div class="nowline" style="top:'+((nowM-lo)/60*HOUR)+'px"></div>' : '';
-      return '<div class="tg-col'+(dates[k]===TODAY?" today":"")+'" data-act="slot" data-date="'+dates[k]+'" data-lo="'+lo+'" style="background-size:100% '+HOUR+'px">'+blocks+line+'</div>';
+      var line = dates[k]===TODAY && nowM>=lo && nowM<=hi ? '<div class="nowline" style="top:'+((nowM-lo)/60*HP)+'px"></div>' : '';
+      return '<div class="tg-col'+(dates[k]===TODAY?" today":"")+'" data-act="slot" data-date="'+dates[k]+'" data-lo="'+lo+'" data-hp="'+HP+'" style="background-size:100% '+HP+'px">'+blocks+line+'</div>';
     }).join("")+(showNow?'<div class="nowall" style="top:'+nowTop+'px;left:'+tcol+'px"></div>':'')+'</div>';
 
-  ui._grid={lo:lo, nowTop:showNow?nowTop:null, today:dates.indexOf(TODAY), key:ui.view+dates[0]+dates.length+(desk?'d':'m'), tcol:tcol};
-  return '<div class="tg"><div class="tg-scroll" id="tgscroll"><div class="tg-inner"'+(!desk&&dates.length>1?' style="min-width:'+(tcol+dates.length*116)+'px"':'')+'><div class="tg-sticky">'+head+(hasAll?allday:allday.replace('class="tg-row tg-all"','class="tg-row tg-all empty"'))+'</div>'+body+'</div></div></div>';
+  ui._grid={lo:lo, hours:hours, hp:HP, desk:desk, nowTop:showNow?nowTop:null, today:dates.indexOf(TODAY), key:ui.view+dates[0]+dates.length+(desk?'d':'m'), tcol:tcol};
+  return '<div class="tg'+(compact?" tg-compact":"")+(desk?"":" tg-phone")+'"><div class="tg-scroll" id="tgscroll"><div class="tg-inner"><div class="tg-sticky">'+head+(hasAll?allday:allday.replace('class="tg-row tg-all"','class="tg-row tg-all empty"'))+'</div>'+body+'</div></div></div>';
 }
 function weekDates(){ var st=weekStart(ui.sel), out=[]; for(var k=0;k<7;k++) out.push(iso(new Date(st.getFullYear(),st.getMonth(),st.getDate()+k))); return out; }
 var deskMQ=null; try{ deskMQ=window.matchMedia("(min-width: 900px)"); var onMQ=function(){ render(); }; deskMQ.addEventListener?deskMQ.addEventListener("change",onMQ):deskMQ.addListener(onMQ); }catch(e){}
 
+function fitGrid(){
+  var sc=document.getElementById("tgscroll"), g=ui._grid; if(!sc||!g||g.desk) return false;
+  var sticky=sc.querySelector(".tg-sticky"), top=sc.getBoundingClientRect().top+window.scrollY;
+  var reserve=86 + (parseFloat(getComputedStyle(document.querySelector(".wrap")).paddingLeft)||0)*0;
+  var avail=window.innerHeight - top - (sticky?sticky.offsetHeight:0) - reserve - 4;
+  var hp=Math.max(18, Math.min(72, Math.floor(avail/g.hours)));
+  if(Math.abs(hp-(ui.hp||0))>=1 && !ui._fitting){ ui.hp=hp; ui._fitting=true; render(); ui._fitting=false; return true; }
+  return false;
+}
+var fitTimer=null; window.addEventListener("resize",function(){ clearTimeout(fitTimer); fitTimer=setTimeout(function(){ if(authState==="in"&&!ui.sheet&&!ui.msheet&&!ui.ssheet) render(); },150); });
 function placeGrid(keep){
+  if(fitGrid()) return;
   var sc=document.getElementById("tgscroll"), g=ui._grid; if(!sc||!g) return;
+  var HOUR=g.hp||60;
   if(keep){ sc.scrollTop=keep.t; sc.scrollLeft=keep.l; }
   else {
     var target = g.nowTop!=null ? g.nowTop-HOUR*1.5 : 0;
@@ -932,7 +987,7 @@ function renderMoneyApp(){
   var h='<div class="wrap'+(isDesk()?" desk":"")+'"><div class="toolbar">'+appNav()+'</div>'+renderMoney()+
     (statusText?'<div class="status">'+esc(statusText)+'</div>':'')+
   '</div>'+
-  (canWrite?'<button class="fab" data-act="addex">'+ICON.plus+'Toevoegen</button>':'')+
+  (canWrite?'<button class="fab" data-act="addex">'+ICON.plus+'<span>Toevoegen</span></button>':'')+
   '<button class="gear" data-act="menu" aria-label="Instellingen" aria-expanded="'+(!!ui.menu)+'">'+ICON.gear+'</button>'+renderMenu()+
   (ui.msheet?renderExSheet():"")+(ui.ssheet?renderTESheet():"");
   var active=document.activeElement&&document.activeElement.id;
@@ -964,14 +1019,14 @@ function renderApp(){
     '</div>'+
     '<div class="filter" role="group" aria-label="Toon items voor">'+
       [["all","Iedereen"],["ewoud","Ewoud"],["helen","Helen"]].map(function(f){return '<button data-act="filter" data-who="'+f[0]+'" aria-pressed="'+(ui.who===f[0])+'">'+f[1]+'</button>';}).join("")+
-      '<button class="cls-toggle" data-act="classes" aria-pressed="'+ui.classes+'">Lessen '+(ui.classes?"zichtbaar":"verborgen")+'</button>'+
+      '<button class="cls-toggle" data-act="classes" aria-pressed="'+ui.classes+'">Lessen '+(ui.classes?"aan":"uit")+'</button>'+
     '</div></div>'+
     (loadState?'<div class="note"><span>'+esc(loadState)+'</span></div>':'')+
     upcomingBdays()+
     body+
     (statusText?'<div class="status">'+esc(statusText)+'</div>':'')+
   '</div>'+
-  (canWrite?'<button class="fab" data-act="add">'+ICON.plus+'Toevoegen</button>':'')+
+  (canWrite?'<button class="fab" data-act="add">'+ICON.plus+'<span>Toevoegen</span></button>':'')+
   '<button class="gear" data-act="menu" aria-label="Instellingen" aria-expanded="'+(!!ui.menu)+'">'+ICON.gear+'</button>'+renderMenu()+
   (ui.sheet?renderSheet():"")+(ui.ssheet?renderTESheet():"");
   var active=document.activeElement&&document.activeElement.id;
@@ -1204,7 +1259,7 @@ document.addEventListener("click",function(e){
     case "goday": ui.sel=t.dataset.date; ui.month=ui.sel.slice(0,7); ui.view="day"; saveUI(); render(); break;
     case "slot":
       if(e.target!==t || !canWrite) break;
-      var r=t.getBoundingClientRect(), mm=+t.dataset.lo + Math.floor(((e.clientY-r.top)/HOUR*60)/30)*30;
+      var r=t.getBoundingClientRect(), mm=+t.dataset.lo + Math.floor(((e.clientY-r.top)/(+t.dataset.hp||HOUR)*60)/30)*30;
       var st=pad(Math.floor(mm/60))+":"+pad(mm%60), en=pad(Math.min(23,Math.floor(mm/60)+1))+":"+pad(mm%60);
       openSheet({type:"event",who:"",title:"",date:t.dataset.date,start:st,end:en,location:"",notes:"",color:"blue",done:false}); break;
     case "pick": ui.sel=t.dataset.date; if(ui.sel.slice(0,7)!==ui.month) ui.month=ui.sel.slice(0,7); render(); break;
