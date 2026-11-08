@@ -1,11 +1,9 @@
-"""Copy the TimeEdit timetable into the calendar's Firestore database.
+"""Copy the TimeEdit timetables into the calendar's Firestore database.
 
-Runs daily from GitHub Actions. Needs two repository secrets:
-  TIMEEDIT_URL               the TimeEdit .ics subscription link
+Runs daily from GitHub Actions. Repository secrets:
+  TIMEEDIT_URL               Ewoud's TimeEdit .ics subscription link
+  TIMEEDIT_URL_HELEN         Helen's TimeEdit .ics subscription link (optional)
   FIREBASE_SERVICE_ACCOUNT   the full JSON of a Firebase service-account key
-
-Each class becomes the document items/te-<id>. Classes that disappear from the
-feed are removed (future ones only). Items people added themselves are never touched.
 """
 import json
 import os
@@ -30,7 +28,7 @@ def fetch(url):
 
 def clean_title(summary):
     first = summary.split(",")[0].strip()
-    first = re.sub(r"^[A-Z0-9\-]+/", "", first)  # drop course-code prefix like "PBA-BM/"
+    first = re.sub(r"^[A-Z0-9\-]+/", "", first)
     return first or summary.strip()
 
 
@@ -52,7 +50,7 @@ def to_local(v):
     raise ValueError(f"unexpected date value {v!r}")
 
 
-def parse(raw):
+def parse(raw, who="both"):
     cal = Calendar.from_ical(raw)
     out = {}
     for ev in cal.walk("VEVENT"):
@@ -69,7 +67,7 @@ def parse(raw):
             notes = "Optional"
         out["te-" + key] = {
             "type": "event",
-            "who": "both",
+            "who": who,
             "title": clean_title(summary),
             "date": d,
             "start": start,
@@ -83,23 +81,29 @@ def parse(raw):
 
 
 def main():
-    url = os.environ.get("TIMEEDIT_URL", "").strip()
     sa = os.environ.get("FIREBASE_SERVICE_ACCOUNT", "").strip()
-    if not url or not sa:
-        sys.exit("TIMEEDIT_URL and FIREBASE_SERVICE_ACCOUNT secrets are required")
+    feeds = [(w, os.environ.get(k, "").strip()) for w, k in (("ewoud", "TIMEEDIT_URL"), ("helen", "TIMEEDIT_URL_HELEN"))]
+    feeds = [(w, u) for w, u in feeds if u]
+    if not feeds or not sa:
+        sys.exit("FIREBASE_SERVICE_ACCOUNT and at least one TimeEdit link (TIMEEDIT_URL) are required")
 
-    feed = parse(fetch(url))
-    if not feed:
-        sys.exit("The TimeEdit feed had no classes; changing nothing to be safe.")
+    feed = {}
+    for who, url in feeds:
+        part = parse(fetch(url), who)
+        if not part:
+            sys.exit(f"The TimeEdit feed for {who} had no classes; changing nothing to be safe.")
+        print(f"{who}: {len(part)} classes")
+        for doc_id, body in part.items():
+            if doc_id in feed and feed[doc_id]["who"] != who:
+                feed[doc_id]["who"] = "both"
+            else:
+                feed[doc_id] = body
 
     firebase_admin.initialize_app(credentials.Certificate(json.loads(sa)))
     db = firestore.client()
     col = db.collection("items")
 
-    existing = {
-        doc.id: doc.to_dict()
-        for doc in col.where("source", "==", "timeedit").stream()
-    }
+    existing = {doc.id: doc.to_dict() for doc in col.where("source", "==", "timeedit").stream()}
     today = datetime.now(TZ).date().isoformat()
 
     added = updated = removed = 0
