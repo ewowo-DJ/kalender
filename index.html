@@ -364,14 +364,8 @@ button{cursor:pointer}
   .tg-compact .blk-t,.tg-compact .blk-l{display:none}
   .tg-compact .blk-n{font-size:9.5px;line-height:1.15;font-weight:600;overflow-wrap:anywhere;hyphens:auto}
   .tg-compact .blk.short .blk-n{white-space:normal}
-  .tg-phone .blk.narrow{padding:3px 2px;align-items:center}
-  .tg-phone .blk.narrow .blk-t{display:none}
-  .tg-phone .blk.narrow .blk-l{display:none}
-  .tg-phone .blk.narrow .blk-n{writing-mode:vertical-rl;transform:rotate(180deg);font-size:10.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:100%;hyphens:manual}
   .tg-compact .blk.short{flex-direction:column;align-items:stretch;padding:2px 3px}
   .tg-compact .blk.short .blk-n{font-size:9.5px;white-space:normal;overflow:hidden}
-  .tg-compact .blk.narrow{padding:3px 1px;align-items:center}
-  .tg-compact .blk.narrow .blk-n{writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:100%;hyphens:manual}
 }
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
@@ -741,7 +735,16 @@ function renderTimeGrid(dates){
   var HP = desk ? HOUR : (ui.hp||36);
   var hours=(hi-lo)/60, height=hours*HP;
   var tcol=desk?64:44;
-  var cols=tcol+"px repeat("+dates.length+", minmax("+(wide?116:0)+"px,1fr))";
+  var dayEvs=perDay.map(function(its){
+    var evs=its.filter(function(i){ return i.type==="event" && mins(i.start)!=null; }).map(function(i){
+      var s=mins(i.start), e=mins(i.end); if(e==null||e<=s) e=s+60; return {i:i,s:s,e:e};
+    });
+    layoutDay(evs); return evs;
+  });
+  /* on a phone, a day with classes side by side gets a wider column (116px per class) */
+  var colMin=dayEvs.map(function(evs){ var n=1; evs.forEach(function(ev){ n=Math.max(n,ev.ncol); }); return wide?116*Math.min(n,3):0; });
+  var cols=tcol+"px "+colMin.map(function(m){ return "minmax("+m+"px,1fr)"; }).join(" ");
+  var innerMin=tcol+colMin.reduce(function(a,b){return a+b;},0);
 
   var head='<div class="tg-row tg-head" style="grid-template-columns:'+cols+'"><div class="tg-corner">'+(compact?'':'W')+isoWeek(dates[0])+'</div>'+
     dates.map(function(d){ var dd=parse(d);
@@ -770,10 +773,7 @@ function renderTimeGrid(dates){
 
   var body='<div class="tg-row tg-body" style="grid-template-columns:'+cols+';height:'+height+'px">'+times+
     perDay.map(function(its,k){
-      var evs=its.filter(function(i){ return i.type==="event" && mins(i.start)!=null; }).map(function(i){
-        var s=mins(i.start), e=mins(i.end); if(e==null||e<=s) e=s+60; return {i:i,s:s,e:e};
-      });
-      layoutDay(evs);
+      var evs=dayEvs[k];
       var blocks=evs.map(function(ev){
         var i=ev.i, te=i.source==="timeedit", top=(ev.s-lo)/60*HP, hgt=Math.max((ev.e-ev.s)/60*HP-2, compact?14:22);
         var w=100/ev.ncol, left=ev.col*w, short=hgt<52;
@@ -790,7 +790,7 @@ function renderTimeGrid(dates){
     }).join("")+(showNow?'<div class="nowall" style="top:'+nowTop+'px;left:'+tcol+'px"></div>':'')+'</div>';
 
   ui._grid={lo:lo, hours:hours, hp:HP, desk:desk, nowTop:showNow?nowTop:null, today:dates.indexOf(TODAY), key:ui.view+dates[0]+dates.length+(desk?'d':'m'), tcol:tcol};
-  return '<div class="tg'+(compact?" tg-compact":"")+(desk?"":" tg-phone")+'"><div class="tg-scroll" id="tgscroll"><div class="tg-inner"'+(wide?' style="min-width:'+(tcol+dates.length*116)+'px"':'')+'><div class="tg-sticky">'+head+(hasAll?allday:allday.replace('class="tg-row tg-all"','class="tg-row tg-all empty"'))+'</div>'+body+'</div></div></div>';
+  return '<div class="tg'+(compact?" tg-compact":"")+(desk?"":" tg-phone")+'"><div class="tg-scroll" id="tgscroll"><div class="tg-inner"'+(wide?' style="min-width:'+innerMin+'px"':'')+'><div class="tg-sticky">'+head+(hasAll?allday:allday.replace('class="tg-row tg-all"','class="tg-row tg-all empty"'))+'</div>'+body+'</div></div></div>';
 }
 function weekDates(){ var st=weekStart(ui.sel), out=[]; for(var k=0;k<7;k++) out.push(iso(new Date(st.getFullYear(),st.getMonth(),st.getDate()+k))); return out; }
 var deskMQ=null; try{ deskMQ=window.matchMedia("(min-width: 900px)"); var onMQ=function(){ render(); }; deskMQ.addEventListener?deskMQ.addEventListener("change",onMQ):deskMQ.addListener(onMQ); }catch(e){}
@@ -821,7 +821,8 @@ function placeGrid(keep){
   /* when a new week opens, swipe to today's column once (phones) */
   if(g.key!==ui._hKey){
     ui._hKey=g.key;
-    if(!g.desk && g.today>0){ var cw=(sc.querySelector(".tg-inner").scrollWidth-g.tcol)/(sc.querySelectorAll(".tg-col").length||1); sc.scrollLeft=Math.max(0,g.today*cw-cw*0.3); }
+    var tc=sc.querySelector(".tg-col.today");
+    if(!g.desk && g.today>0 && tc){ sc.scrollLeft=Math.max(0, tc.offsetLeft - g.tcol - 24); }
   }
   ui._lastKey=g.key;
 }
