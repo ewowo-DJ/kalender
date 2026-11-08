@@ -370,6 +370,11 @@ button{cursor:pointer}
 .blk{overflow:clip}
 .blk-c{display:flex;flex-direction:column;gap:2px;position:sticky;top:calc(var(--stk,0px) + 4px);min-width:0}
 .blk.short .blk-c{flex-direction:row;align-items:center;gap:6px}
+.own-pick.sm{padding:0;width:30px;height:30px;border-radius:50%;border:0;overflow:hidden}
+.own-pick.sm::before{width:30px;height:30px;border-radius:50%;box-shadow:inset 0 0 0 6px var(--pick)}
+.own-pick.sm.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+.bd-prev{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:4px 8px;border-radius:7px;background:var(--bday-soft);color:var(--bday)}
+.bd-prev svg{width:14px;height:14px}
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -463,6 +468,7 @@ var ICON = {
   gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   logout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>',
   link:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
+  repeat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/></svg>',
   cake:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21h16M5 21v-7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7"/><path d="M5 16c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 4.5 0"/><path d="M12 12V8M12 4.5c.6.8.6 1.6 0 2.2-.6-.6-.6-1.4 0-2.2z"/></svg>',
   tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -489,9 +495,19 @@ function bdayTitle(i){
   if(i.type==="anniversary") return i.age>0 ? i.age+" jaar samen" : "Samen sinds vandaag";
   return "Verjaardag "+i.title+(i.age!=null&&i.age>0?" ("+i.age+")":"");
 }
+/* Weekly repeat: same weekday from the start date, optionally until a date */
+function repOn(i, date){
+  if(i.repeat!=="weekly" || !i.date || date<i.date || (i.until && date>i.until)) return false;
+  return Math.round((parse(date)-parse(i.date))/864e5)%7===0;
+}
+function repCopy(i, date){
+  var c=Object.assign({}, i); c.date=date; c._series=true;
+  if(i.type==="task") c.done=(i.doneDates||[]).indexOf(date)>=0;
+  return c;
+}
 function itemsOn(date){
-  return allItems().filter(function(i){ return visible(i) && (yearly(i) ? bdayOn(i,date) : i.date===date); })
-    .map(function(i){ return yearly(i) ? bdayCopy(i,date) : i; })
+  return allItems().filter(function(i){ return visible(i) && (yearly(i) ? bdayOn(i,date) : i.repeat==="weekly" ? repOn(i,date) : i.date===date); })
+    .map(function(i){ return yearly(i) ? bdayCopy(i,date) : i.repeat==="weekly" ? repCopy(i,date) : i; })
     .sort(function(a,b){
     if(yearly(a)!==yearly(b)) return yearly(a)?-1:1;
     if(a.type==="anniversary"||b.type==="anniversary") return a.type==="anniversary"?-1:1;
@@ -549,14 +565,15 @@ function renderItem(i){
       '<span class="bar'+dual(i).cls+'" style="background:'+evColor(i)+dual(i).css+'"></span>'+
       '<div class="time">'+(i.start?esc(i.start):"Hele dag")+(i.end?'<small>'+esc(i.end)+'</small>':'')+'</div>'+
       '<div class="body"><div class="title-row"><div class="title">'+esc(i.title)+'</div>'+chip(i.who)+'</div>'+
+      (i.repeat==="weekly"?'<div class="meta">'+ICON.repeat+'<span>Elke '+DOW_LONG[parse(i.date).getDay()]+(i.until?' tot '+longDate(i.until):'')+'</span></div>':'')+
       (i.location?'<div class="meta">'+ICON.pin+'<a href="'+esc(mapUrl)+'" target="_blank" rel="noopener" data-stop="1">'+esc(i.location)+'</a></div>':'')+
       (i.notes?'<div class="meta">'+ICON.note+'<span>'+esc(i.notes)+'</span></div>':'')+
       (te?'<div class="meta"><span class="src">Uit TimeEdit · dagelijks bijgewerkt</span></div>':(byLine(i)?'<div class="meta"><span class="src">'+esc(byLine(i))+'</span></div>':''))+
       '</div></div>';
   }
   return '<div class="item'+(i.done?" done":"")+'" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0">'+
-    '<button class="check" role="checkbox" aria-checked="'+(!!i.done)+'" aria-label="'+esc(i.title)+' afvinken" data-act="toggle" data-id="'+i.id+'">'+ICON.tick+'</button>'+
-    '<div class="body"><div class="title-row"><span class="tag">Taak'+(i.start?' · '+esc(i.start):'')+'</span>'+chip(i.who)+'</div><div class="title">'+esc(i.title)+'</div>'+
+    '<button class="check" role="checkbox" aria-checked="'+(!!i.done)+'" aria-label="'+esc(i.title)+' afvinken" data-act="toggle" data-id="'+i.id+'" data-date="'+i.date+'">'+ICON.tick+'</button>'+
+    '<div class="body"><div class="title-row"><span class="tag">Taak'+(i.start?' · '+esc(i.start):'')+(i.repeat==="weekly"?' · wekelijks':'')+'</span>'+chip(i.who)+'</div><div class="title">'+esc(i.title)+'</div>'+
     (i.notes?'<div class="meta">'+ICON.note+'<span>'+esc(i.notes)+'</span></div>':'')+
     (byLine(i)?'<div class="meta"><span class="src">'+esc(byLine(i))+'</span></div>':'')+
     '</div></div>';
@@ -632,6 +649,8 @@ document.addEventListener("input",function(e){
 });
 document.addEventListener("change",function(e){
   if(e.target.id==="accent-pick"){ setAccent(e.target.value,true); render(); return; }
+  if(e.target.classList&&e.target.classList.contains("ev-pick")&&ui.sheet){ readForm(); ui.sheet.color=e.target.value; render(); return; }
+  if(e.target.id==="bday-pick"){ setBday(e.target.value,true); render(); return; }
   if(e.target.classList&&e.target.classList.contains("te-pick")){ readTEForm(); setTEColor(e.target.dataset.w, e.target.value, true); render(); return; }
   var t=e.target; if(!t.classList||!t.classList.contains("native")) return;
   var txt=document.getElementById(t.id.slice(0,-2)); if(txt&&t.value){ txt.value=fmtBE(t.value); txt.dispatchEvent(new Event("input",{bubbles:true})); }
@@ -639,9 +658,17 @@ document.addEventListener("change",function(e){
 
 function renderSheet(){
   var it=ui.sheet, kind=it.type, isEv=kind==="event", isB=kind==="birthday";
+  var curC = it.color ? (COLORS[it.color]||it.color) : (isEv?COLORS.blue:"#b5700a");
   var sw=Object.keys(COLORS).map(function(c){
     return '<button type="button" style="background:'+COLORS[c]+'" aria-label="'+c+'" aria-pressed="'+(it.color===c)+'" data-act="color" data-color="'+c+'"></button>';
   }).join("");
+  var custom=it.color && !COLORS[it.color];
+  var colorField='<div class="field"><label>Kleur</label><div class="swatches">'+(kind==="task"?'<button type="button" style="background:#b5700a" aria-label="standaard" aria-pressed="'+(!it.color)+'" data-act="color" data-color=""></button>':'')+sw+
+    '<label class="own-pick sm'+(custom?' on':'')+'" style="--pick:'+esc(curC)+'" title="Eigen kleur"><input type="color" class="ev-pick" value="'+esc(/^#/.test(curC)?curC:"#3552d4")+'" aria-label="Eigen kleur kiezen"></label></div></div>';
+  var repField = isB ? '' : '<div class="field"><label>Herhalen</label><div class="tabs" role="group" aria-label="Herhalen">'+
+      '<button type="button" data-act="rep" data-rep="" aria-pressed="'+(it.repeat!=="weekly")+'">Niet</button>'+
+      '<button type="button" data-act="rep" data-rep="weekly" aria-pressed="'+(it.repeat==="weekly")+'">Elke week</button></div></div>'+
+    (it.repeat==="weekly" ? dateField("f-until","Herhalen tot en met (optioneel)", it.until||"", it._untilRaw)+'<p class="hint">Leeg laten = blijft elke week terugkomen. Wijzigen of verwijderen geldt voor alle weken.</p>' : '');
   var NAMES={event:["Nieuwe afspraak","Afspraak wijzigen","Afspraak toevoegen"], task:["Nieuwe taak","Taak wijzigen","Taak toevoegen"], birthday:["Nieuwe verjaardag","Verjaardag wijzigen","Verjaardag toevoegen"]}[kind];
   var kinds=[["event","Afspraak"],["task","Taak"],["birthday","Verjaardag"]];
   return '<div class="scrim" data-act="scrim"><form class="sheet" id="sheet" novalidate>'+
@@ -656,10 +683,11 @@ function renderSheet(){
     (isEv?
       '<div class="row"><div class="field"><label for="f-start">Begin</label><input id="f-start" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(it.start)+'"></div><div class="field"><label for="f-end">Einde</label><input id="f-end" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(it.end)+'"></div></div>'+
       '<div class="field"><label for="f-loc">Locatie</label><input id="f-loc" value="'+esc(it.location)+'" placeholder="Adres of plaats" autocomplete="off"></div>'+
-      '<div class="field"><label>Kleur</label><div class="swatches">'+sw+'</div></div>'
+      colorField + repField
     : isB ? ''
     :
-      '<div class="field"><label for="f-start">Tijd (optioneel)</label><input id="f-start" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(it.start)+'"></div>'
+      '<div class="field"><label for="f-start">Tijd (optioneel)</label><input id="f-start" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(it.start)+'"></div>'+
+      colorField + repField
     )+
     '<div class="field"><label for="f-notes">'+(isB?"Notities (bv. cadeau-ideeën)":"Notities")+'</label><textarea id="f-notes" placeholder="Optioneel">'+esc(it.notes)+'</textarea></div>'+
     (isB?'<p class="hint">Komt elk jaar terug, en verschijnt een week op voorhand bij "Binnenkort jarig".</p>':'')+
@@ -705,7 +733,9 @@ function evColor(i){
     var ce=teColor("ewoud"), ch=teColor("helen");
     return i.who==="helen" ? ch : ce;
   }
-  return i.type==="task" ? "var(--task)" : yearly(i) ? "var(--bday)" : (COLORS[i.color]||COLORS.blue);
+  if(yearly(i)) return "var(--bday)";
+  if(i.color) return COLORS[i.color] || (/^#[0-9a-f]{6}$/i.test(i.color) ? i.color : COLORS.blue);
+  return i.type==="task" ? "var(--task)" : COLORS.blue;
 }
 /* Place overlapping events side by side, like TimeEdit. */
 function layoutDay(evs){
@@ -762,7 +792,7 @@ function renderTimeGrid(dates){
       return '<div class="tg-allcell'+(dates[k]===TODAY?" today":"")+'">'+list.map(function(i){
         var te=i.source==="timeedit"||i.source==="fixed", task=i.type==="task";
         return '<div class="chip'+(task?" task":"")+(i.done?" done":"")+'" style="--c:'+evColor(i)+'"'+(te?'':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
-          (task?'<button class="mini-check" role="checkbox" aria-checked="'+(!!i.done)+'" aria-label="Klaar" data-act="toggle" data-id="'+i.id+'">'+ICON.tick+'</button>':'')+
+          (task?'<button class="mini-check" role="checkbox" aria-checked="'+(!!i.done)+'" aria-label="Klaar" data-act="toggle" data-id="'+i.id+'" data-date="'+i.date+'">'+ICON.tick+'</button>':'')+
           (yearly(i)?'<i class="ck">'+(i.type==="anniversary"?ICON.heart:ICON.cake)+'</i>':'')+'<span>'+(i.start&&task?esc(i.start)+' ':'')+esc(yearly(i)?bdayTitle(i):i.title)+'</span>'+(i.who&&i.who!=="both"?'<em class="dot-'+i.who+'" title="'+PEOPLE[i.who].name+'"></em>':'')+'</div>';
       }).join("")+'</div>';
     }).join("")+'</div>';
@@ -932,14 +962,16 @@ function applyTheme(t){
   var c=curTheme()==="dark"?"#0f111a":"#f3f4f8";
   document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){ m.setAttribute("content",c); });
   if(typeof userAccent!=="undefined" && userAccent) applyAccent(userAccent);
+  if(typeof userBday!=="undefined" && userBday) applyBday(userBday);
 }
 function loadTheme(user){
   themeUid=user.uid||"";
   try{ var local=localStorage.getItem("cal-theme-"+themeUid); if(local){ applyTheme(local); localStorage.setItem("cal-theme-last",local); } }catch(e){}
-  try{ var la=localStorage.getItem("cal-accent-"+themeUid); if(la!=null) setAccent(la,false); }catch(e){}
+  try{ var la=localStorage.getItem("cal-accent-"+themeUid); if(la!=null) setAccent(la,false); var lb2=localStorage.getItem("cal-bday-"+themeUid); if(lb2!=null) setBday(lb2,false); }catch(e){}
   firebase.firestore().doc("settings/prefs-"+themeUid).get().then(function(d){
     var t=d.exists&&d.data().theme, ac=d.exists?d.data().accent:undefined;
     if(ac!==undefined){ setAccent(ac||"",false); render(); }
+    var bd=d.exists?d.data().bday:undefined; if(bd!==undefined){ setBday(bd||"",false); render(); }
     if(t==="light"||t==="dark"){ applyTheme(t); try{ localStorage.setItem("cal-theme-"+themeUid,t); localStorage.setItem("cal-theme-last",t); }catch(e){} render(); }
   }).catch(function(){});
 }
@@ -966,6 +998,19 @@ function setAccent(hex, save){
 }
 if(window.__accent) setAccent(window.__accent,false);
 
+var userBday="", BDAY_PRESETS=["#d9467a","#e0559b","#c43d3d","#e07a2f","#c49a10","#2b9469","#3552d4","#8457d1"];
+function applyBday(hex){
+  var st=document.documentElement.style, rgb=hexRgb(hex);
+  if(!rgb){ st.removeProperty("--bday"); st.removeProperty("--bday-soft"); return; }
+  var dark=curTheme()==="dark", a = dark && lum(rgb)<.2 ? rgbHex(rgb.map(function(v){ return v+(255-v)*.35; })) : rgbHex(rgb);
+  st.setProperty("--bday", a); st.setProperty("--bday-soft", "color-mix(in srgb, "+a+" "+(dark?"28%":"16%")+", var(--surface))");
+}
+function setBday(hex, save){
+  userBday=hex||""; applyBday(userBday);
+  try{ localStorage.setItem("cal-bday-last",userBday); if(themeUid) localStorage.setItem("cal-bday-"+themeUid,userBday); }catch(e){}
+  if(save && themeUid && window.firebase) firebase.firestore().doc("settings/prefs-"+themeUid).set({bday:userBday},{merge:true}).catch(function(){});
+}
+try{ var lb=localStorage.getItem("cal-bday-last"); if(lb) setBday(lb,false); }catch(e){}
 function renderMenu(){
   if(!ui.menu) return "";
   var dark=curTheme()==="dark", linked=["ewoud","helen"].filter(function(w){return TE[w];}).length;
@@ -982,6 +1027,12 @@ function renderMenu(){
       '<div class="own"><label class="own-pick" style="--pick:'+esc(cur)+'"><input type="color" id="accent-pick" value="'+esc(cur)+'" aria-label="Eigen kleur kiezen"><span>Eigen kleur</span></label>'+
         '<code id="accent-hex">'+esc(cur.toUpperCase())+'</code>'+
         (userAccent?'<button class="link" data-act="accent-reset">Standaard</button>':'')+'</div>'+
+    '</div>'+
+    '<div class="menu-sec"><h4>Verjaardagen</h4>'+
+      '<label class="lbl">Kleur van verjaardagen</label>'+
+      '<div class="swatch-row">'+BDAY_PRESETS.map(function(c){ var cb=(userBday||BDAY_PRESETS[0]).toLowerCase(); return '<button class="sw" style="background:'+c+'" data-act="bday" data-c="'+c+'" aria-label="Verjaardagen in '+c+'" aria-pressed="'+(cb===c)+'"></button>'; }).join("")+'</div>'+
+      '<div class="own"><label class="own-pick" style="--pick:'+esc(userBday||BDAY_PRESETS[0])+'"><input type="color" id="bday-pick" value="'+esc(userBday||BDAY_PRESETS[0])+'" aria-label="Eigen kleur voor verjaardagen"><span>Eigen kleur</span></label>'+
+        '<span class="bd-prev">'+ICON.cake+' Verjaardag</span>'+(userBday?'<button class="link" data-act="bday-reset">Standaard</button>':'')+'</div>'+
     '</div>'+
     '<div class="menu-sec"><h4>Koppelingen</h4>'+
       '<button class="menu-row" data-act="te-open">'+ICON.link+'<span>TimeEdit koppelen</span><em>'+linked+'/2</em></button>'+
@@ -1248,6 +1299,7 @@ function readForm(){
   var it=ui.sheet, g=function(id){var e=document.getElementById(id);return e?e.value.trim():"";};
   it.title=g("f-title"); var dd=readDate("f-date"); if(dd){ if(dd.iso) it.date=dd.iso; it._dateRaw=dd.raw; } var ts=normTime(g("f-start")); it.start=ts.v; it._timeErr=!ts.ok; it.notes=g("f-notes");
   if(it.type==="birthday"){ var yk=document.getElementById("f-yk"); if(yk) it.yearKnown=!yk.checked; }
+  var un=readDate("f-until"); if(un){ it.until=un.iso||""; it._untilRaw=un.raw&&un.raw.length?un.raw:null; }
   if(it.type==="event"){ var te2=normTime(g("f-end")); it.end=te2.v; it._timeErr=it._timeErr||!te2.ok; it.location=g("f-loc"); }
 }
 function shift(n){
@@ -1270,6 +1322,8 @@ document.addEventListener("click",function(e){
     case "mode": if(curTheme()!==t.dataset.mode) toggleTheme(); break;
     case "accent": setAccent(t.dataset.c,true); render(); break;
     case "accent-reset": setAccent("",true); render(); break;
+    case "bday": setBday(t.dataset.c,true); render(); break;
+    case "bday-reset": setBday("",true); render(); break;
     case "logout": ui.menu=false; unsub(); themeUid=""; firebase.auth().signOut(); break;
     case "pickdate":
       var nat=document.getElementById(t.dataset.for+"-n");
@@ -1289,7 +1343,11 @@ document.addEventListener("click",function(e){
     case "filter": ui.who=t.dataset.who; saveUI(); render(); break;
     case "add": if(!canWrite) break; openSheet({type:"event",who:"",title:"",date:ui.sel,start:"",end:"",location:"",notes:"",color:"blue",done:false}); break;
     case "edit": if(!canWrite) break; var src=S.items.find(function(i){return i.id===t.dataset.id;}); if(src){ var cp=JSON.parse(JSON.stringify(src)); if(cp.type==="birthday"&&cp.yearKnown===false) cp.date=cp.date; openSheet(cp); } break;
-    case "toggle": e.stopPropagation(); if(!canWrite) break; var it=S.items.find(function(i){return i.id===t.dataset.id;}); if(it){ var c=JSON.parse(JSON.stringify(it)); c.done=!c.done; it.done=c.done; write(c.id, clean(c)); render(); } break;
+    case "toggle": e.stopPropagation(); if(!canWrite) break; var it=S.items.find(function(i){return i.id===t.dataset.id;});
+      if(it){ var c=JSON.parse(JSON.stringify(it));
+        if(c.repeat==="weekly"){ var dd=t.dataset.date, list=c.doneDates||[], ix=list.indexOf(dd); if(ix>=0) list.splice(ix,1); else list.push(dd); c.doneDates=list; it.doneDates=list.slice(); }
+        else { c.done=!c.done; it.done=c.done; }
+        write(c.id, clean(c)); render(); } break;
     case "close": ui.sheet=null; ui.msheet=null; ui.ssheet=null; render(); break;
     case "te-color": readTEForm(); setTEColor(t.dataset.w, t.dataset.c, true); render(); break;
     case "te-open": ui.menu=false; ui.ssheet={}; ui.err=""; render(); break;
@@ -1305,7 +1363,8 @@ document.addEventListener("click",function(e){
       var xid=ui.msheet.id; EX=EX.filter(function(x){return x.id!==xid;}); ui.msheet=null; ui.armed=false; writeEx(xid,null); render(); break;
     case "type": readForm(); ui.sheet.type=t.dataset.type; render(); break;
     case "who": readForm(); ui.sheet.who=t.dataset.who; ui.err=""; render(); break;
-    case "color": readForm(); ui.sheet.color=t.dataset.color; render(); break;
+    case "color": readForm(); ui.sheet.color=t.dataset.color||""; if(!ui.sheet.color) delete ui.sheet.color; render(); break;
+    case "rep": readForm(); ui.sheet.repeat=t.dataset.rep||""; render(); break;
     case "delete":
       if(!ui.armed){ readForm(); ui.armed=true; render(); break; }
       var did=ui.sheet.id; S.items=S.items.filter(function(i){return i.id!==did;}); ui.sheet=null; write(did, null); render(); break;
@@ -1319,6 +1378,8 @@ document.addEventListener("keydown",function(e){
 });
 document.addEventListener("input",function(e){
   if(e.target.classList&&e.target.classList.contains("te-pick")){ var row=e.target.closest(".te-color"); if(row){ row.querySelector(".own-pick").style.setProperty("--pick",e.target.value); var pv=row.querySelector(".te-prev"); if(pv) pv.style.setProperty("--c",e.target.value); } return; }
+  if(e.target.classList&&e.target.classList.contains("ev-pick")){ var op2=e.target.closest(".own-pick"); if(op2) op2.style.setProperty("--pick",e.target.value); return; }
+  if(e.target.id==="bday-pick"){ applyBday(e.target.value); var op3=e.target.closest(".own-pick"); if(op3) op3.style.setProperty("--pick",e.target.value); return; }
   if(e.target.id==="accent-pick"){ applyAccent(e.target.value); userAccent=e.target.value; var hx=document.getElementById("accent-hex"); if(hx) hx.textContent=e.target.value.toUpperCase(); var op=e.target.closest(".own-pick"); if(op) op.style.setProperty("--pick",e.target.value); return; }
   if(e.target.id==="x-amt"&&ui.msheet){ ui.msheet.amountStr=e.target.value; var h=document.querySelector("#msheet .hint"); if(h) h.textContent=splitHint(ui.msheet); }
 });
@@ -1331,9 +1392,13 @@ document.addEventListener("submit",function(e){
   if(!it.title){ui.err=it.type==="birthday"?"Vul de naam in.":"Geef eerst een titel op."; render(); return;}
   if(!it.date||it._dateRaw){ui.err="Vul de datum in als dd/mm/jjjj, bv. 29/01/2004."; render(); return;}
   if(it._timeErr){ui.err="Vul de tijd in als uu:mm, bv. 09:15 of 14:30."; render(); return;}
+  if(it._untilRaw){ui.err="Vul de einddatum van de herhaling in als dd/mm/jjjj, of laat ze leeg."; render(); return;}
+  delete it._untilRaw;
   delete it._dateRaw; delete it._timeErr;
   if(it.type==="event"&&it.start&&it.end&&it.end<it.start){ui.err="Het einde ligt voor het begin."; render(); return;}
-  if(it.type==="task"){delete it.end; delete it.location; delete it.color;}
+  if(it.type==="task"){delete it.end; delete it.location;}
+  if(it.repeat!=="weekly"){ delete it.repeat; delete it.until; delete it.doneDates; }
+  else if(it.until && it.until<it.date){ ui.err="De herhaling moet na de begindatum eindigen."; render(); return; }
   if(it.type==="birthday"){ ["end","location","color","start","done","age"].forEach(function(k){ delete it[k]; }); it.yearKnown=it.yearKnown!==false; }
   delete it.example;
   if(!it.id){ it.id=uid(); if(userName) it.addedBy=userName; S.items.push(it); }
