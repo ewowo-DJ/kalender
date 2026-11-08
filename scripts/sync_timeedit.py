@@ -1,9 +1,13 @@
-"""Copy the TimeEdit timetables into the calendar's Firestore database.
+"""Copy the TimeEdit timetable into the calendar's Firestore database.
 
 Runs daily from GitHub Actions. Repository secrets:
   TIMEEDIT_URL               Ewoud's TimeEdit .ics subscription link
   TIMEEDIT_URL_HELEN         Helen's TimeEdit .ics subscription link (optional)
   FIREBASE_SERVICE_ACCOUNT   the full JSON of a Firebase service-account key
+
+Each class becomes the document items/te-<id>, labelled for Ewoud, Helen, or both
+when the same class is in both timetables. Classes that disappear from the
+feed are removed (future ones only). Items people added themselves are never touched.
 """
 import json
 import os
@@ -28,7 +32,7 @@ def fetch(url):
 
 def clean_title(summary):
     first = summary.split(",")[0].strip()
-    first = re.sub(r"^[A-Z0-9\-]+/", "", first)
+    first = re.sub(r"^[A-Z0-9\-]+/", "", first)  # drop course-code prefix like "PBA-BM/"
     return first or summary.strip()
 
 
@@ -87,6 +91,7 @@ def main():
     if not feeds or not sa:
         sys.exit("FIREBASE_SERVICE_ACCOUNT and at least one TimeEdit link (TIMEEDIT_URL) are required")
 
+    # Fetch every feed first; if any fails, the script stops before changing anything.
     feed = {}
     for who, url in feeds:
         part = parse(fetch(url), who)
@@ -95,7 +100,7 @@ def main():
         print(f"{who}: {len(part)} classes")
         for doc_id, body in part.items():
             if doc_id in feed and feed[doc_id]["who"] != who:
-                feed[doc_id]["who"] = "both"
+                feed[doc_id]["who"] = "both"   # same class in both timetables
             else:
                 feed[doc_id] = body
 
@@ -103,7 +108,10 @@ def main():
     db = firestore.client()
     col = db.collection("items")
 
-    existing = {doc.id: doc.to_dict() for doc in col.where("source", "==", "timeedit").stream()}
+    existing = {
+        doc.id: doc.to_dict()
+        for doc in col.where("source", "==", "timeedit").stream()
+    }
     today = datetime.now(TZ).date().isoformat()
 
     added = updated = removed = 0
