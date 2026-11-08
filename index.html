@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#f3f4f8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0f111a" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
+<script>try{var t=localStorage.getItem("cal-theme-last");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Onze kalender</title>
@@ -110,7 +111,10 @@ button{cursor:pointer}
 .login .primary{height:50px;padding:0 24px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:600;font-size:16px}
 .foot{display:flex;justify-content:center;gap:8px;font-size:12px;color:var(--muted);padding-top:8px;flex-wrap:wrap}
 .foot button{border:0;background:none;color:var(--accent);font-size:12px;padding:0;text-decoration:underline}
-.appnav{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.appnav{display:grid;grid-template-columns:1fr 1fr auto;gap:6px}
+.appnav .theme-btn{width:44px;padding:0}
+.appnav .theme-btn{justify-content:center}
+.appnav button.theme-btn svg{width:20px;height:20px;flex:none}
 .appnav button{display:flex;align-items:center;justify-content:center;gap:8px;height:42px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--muted);font-weight:600;font-size:15px}
 .appnav button svg{width:18px;height:18px}
 .appnav button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -142,6 +146,7 @@ button{cursor:pointer}
   .wrap.desk .toolbar{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"nav top view" "filter filter filter";align-items:center;gap:12px 24px}
   .wrap.desk .appnav{grid-area:nav;display:flex;width:auto}
   .wrap.desk .appnav button{padding:0 16px}
+  .wrap.desk .appnav .theme-btn{padding:0;width:44px;justify-content:center}
   .wrap.desk .top{grid-area:top;justify-content:center;max-width:560px;width:100%;justify-self:center}
   .wrap.desk .viewbar{grid-area:view;position:static;width:300px;box-shadow:none}
   .wrap.desk .filter{grid-area:filter}
@@ -371,6 +376,8 @@ var ICON = {
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
   heart:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.5s-7.5-4.4-9.3-9.2C1.5 8 3.6 4.5 7.2 4.5c2 0 3.6 1.1 4.8 2.8 1.2-1.7 2.8-2.8 4.8-2.8 3.6 0 5.7 3.5 4.5 6.8-1.8 4.8-9.3 9.2-9.3 9.2z"/></svg>',
+  sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
+  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
   cake:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21h16M5 21v-7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7"/><path d="M5 16c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 4.5 0"/><path d="M12 12V8M12 4.5c.6.8.6 1.6 0 2.2-.6-.6-.6-1.4 0-2.2z"/></svg>',
   tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -770,10 +777,34 @@ function saveTE(){
   });
 }
 
+/* ---------- Light / dark mode, remembered per account ---------- */
+var themeUid="";
+function curTheme(){ var t=document.documentElement.getAttribute("data-theme"); if(t==="light"||t==="dark") return t; try{ return matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"; }catch(e){ return "light"; } }
+function applyTheme(t){
+  if(t==="light"||t==="dark") document.documentElement.setAttribute("data-theme",t); else document.documentElement.removeAttribute("data-theme");
+  var c=curTheme()==="dark"?"#0f111a":"#f3f4f8";
+  document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){ m.setAttribute("content",c); });
+}
+function loadTheme(user){
+  themeUid=user.uid||"";
+  try{ var local=localStorage.getItem("cal-theme-"+themeUid); if(local){ applyTheme(local); localStorage.setItem("cal-theme-last",local); } }catch(e){}
+  firebase.firestore().doc("settings/prefs-"+themeUid).get().then(function(d){
+    var t=d.exists&&d.data().theme;
+    if(t==="light"||t==="dark"){ applyTheme(t); try{ localStorage.setItem("cal-theme-"+themeUid,t); localStorage.setItem("cal-theme-last",t); }catch(e){} render(); }
+  }).catch(function(){});
+}
+function toggleTheme(){
+  var t=curTheme()==="dark"?"light":"dark";
+  applyTheme(t);
+  try{ localStorage.setItem("cal-theme-last",t); if(themeUid) localStorage.setItem("cal-theme-"+themeUid,t); }catch(e){}
+  if(themeUid && window.firebase) firebase.firestore().doc("settings/prefs-"+themeUid).set({theme:t, name:userName||userEmail},{merge:true}).catch(function(){});
+  render();
+}
 function appNav(){
   return '<nav class="appnav" aria-label="Onderdelen">'+
     '<button data-act="tab" data-tab="cal" aria-pressed="'+(ui.tab==="cal")+'">'+ICON.cal+'Kalender</button>'+
-    '<button data-act="tab" data-tab="money" aria-pressed="'+(ui.tab==="money")+'">'+ICON.euro+'Uitgaven</button></nav>';
+    '<button data-act="tab" data-tab="money" aria-pressed="'+(ui.tab==="money")+'">'+ICON.euro+'Uitgaven</button>'+
+    '<button class="theme-btn" data-act="theme" aria-label="'+(curTheme()==="dark"?"Lichte modus":"Donkere modus")+'" title="'+(curTheme()==="dark"?"Lichte modus":"Donkere modus")+'">'+(curTheme()==="dark"?ICON.sun:ICON.moon)+'</button></nav>';
 }
 function renderMoneyApp(){
   var h='<div class="wrap'+(isDesk()?" desk":"")+'"><div class="toolbar">'+appNav()+'</div>'+renderMoney()+
@@ -869,7 +900,7 @@ function start(){
     unsub();
     if(!user){ authState="out"; S.items=[]; render(); return; }
     authState="in"; userEmail=user.email||""; userName=cap(((user.displayName||user.email||"").split(/[\s@._]/)[0]||"").toLowerCase()); canWrite=true; loadState="Je kalender wordt geladen…"; render();
-    startExpenses(); startTE();
+    startExpenses(); startTE(); loadTheme(user);
     var t=setTimeout(function(){ loadState = S.items.length ? "Offline: je ziet de laatst opgeslagen versie." : "De kalender is nu niet bereikbaar. Controleer je verbinding."; render(); },10000);
     stopSnap=col.onSnapshot({includeMetadataChanges:true}, function(snap){
       S.items=snap.docs.map(function(doc){ var o=Object.assign({}, doc.data()); o.id=doc.id; return o; });
@@ -1038,6 +1069,7 @@ document.addEventListener("click",function(e){
   if(act==="scrim"){ if(e.target===t){ui.sheet=null;ui.msheet=null;ui.ssheet=null;render();} return; }
   switch(act){
     case "login": doLogin(); break;
+    case "theme": toggleTheme(); break;
     case "logout": unsub(); firebase.auth().signOut(); break;
     case "pickdate":
       var nat=document.getElementById(t.dataset.for+"-n");
