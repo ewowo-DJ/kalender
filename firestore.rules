@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Only Ewoud and Helen can read or change the calendar.
+    function isFamily() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in ['EWOUD_EMAIL', 'HELEN_EMAIL'];
+    }
+    match /items/{id} {
+      allow read: if isFamily();
+      // Classes from TimeEdit are written by the daily sync only.
+      allow create, update: if isFamily() && !id.matches('te-.*') && request.resource.data.get('source', '') != 'timeedit';
+      allow delete: if isFamily() && !id.matches('te-.*');
+    }
+    // Shared expenses: both can add, change and remove.
+    match /expenses/{id} {
+      allow read, write: if isFamily();
+    }
+  }
+}
