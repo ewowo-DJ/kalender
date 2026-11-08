@@ -364,6 +364,10 @@ button{cursor:pointer}
   .tg-compact .blk-t,.tg-compact .blk-l{display:none}
   .tg-compact .blk-n{font-size:9.5px;line-height:1.15;font-weight:600;overflow-wrap:anywhere;hyphens:auto}
   .tg-compact .blk.short .blk-n{white-space:normal}
+  .tg-phone .blk.narrow{padding:3px 2px;align-items:center}
+  .tg-phone .blk.narrow .blk-t{display:none}
+  .tg-phone .blk.narrow .blk-l{display:none}
+  .tg-phone .blk.narrow .blk-n{writing-mode:vertical-rl;transform:rotate(180deg);font-size:10.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:100%;hyphens:manual}
   .tg-compact .blk.short{flex-direction:column;align-items:stretch;padding:2px 3px}
   .tg-compact .blk.short .blk-n{font-size:9.5px;white-space:normal;overflow:hidden}
   .tg-compact .blk.narrow{padding:3px 1px;align-items:center}
@@ -733,11 +737,11 @@ function renderTimeGrid(dates){
     if(i.type==="event" && s!=null){ lo=Math.min(lo, Math.floor(s/60)*60); hi=Math.max(hi, Math.ceil(((e!=null&&e>s)?e:s+60)/60)*60); }
   }); });
   hi=Math.min(hi,24*60);
-  var desk=isDesk(), compact=!desk&&dates.length>1;
+  var desk=isDesk(), wide=!desk&&dates.length>1, compact=false;
   var HP = desk ? HOUR : (ui.hp||36);
   var hours=(hi-lo)/60, height=hours*HP;
-  var tcol=desk?64:(compact?30:44);
-  var cols=tcol+"px repeat("+dates.length+", minmax(0,1fr))";
+  var tcol=desk?64:44;
+  var cols=tcol+"px repeat("+dates.length+", minmax("+(wide?116:0)+"px,1fr))";
 
   var head='<div class="tg-row tg-head" style="grid-template-columns:'+cols+'"><div class="tg-corner">'+(compact?'':'W')+isoWeek(dates[0])+'</div>'+
     dates.map(function(d){ var dd=parse(d);
@@ -786,7 +790,7 @@ function renderTimeGrid(dates){
     }).join("")+(showNow?'<div class="nowall" style="top:'+nowTop+'px;left:'+tcol+'px"></div>':'')+'</div>';
 
   ui._grid={lo:lo, hours:hours, hp:HP, desk:desk, nowTop:showNow?nowTop:null, today:dates.indexOf(TODAY), key:ui.view+dates[0]+dates.length+(desk?'d':'m'), tcol:tcol};
-  return '<div class="tg'+(compact?" tg-compact":"")+(desk?"":" tg-phone")+'"><div class="tg-scroll" id="tgscroll"><div class="tg-inner"><div class="tg-sticky">'+head+(hasAll?allday:allday.replace('class="tg-row tg-all"','class="tg-row tg-all empty"'))+'</div>'+body+'</div></div></div>';
+  return '<div class="tg'+(compact?" tg-compact":"")+(desk?"":" tg-phone")+'"><div class="tg-scroll" id="tgscroll"><div class="tg-inner"'+(wide?' style="min-width:'+(tcol+dates.length*116)+'px"':'')+'><div class="tg-sticky">'+head+(hasAll?allday:allday.replace('class="tg-row tg-all"','class="tg-row tg-all empty"'))+'</div>'+body+'</div></div></div>';
 }
 function weekDates(){ var st=weekStart(ui.sel), out=[]; for(var k=0;k<7;k++) out.push(iso(new Date(st.getFullYear(),st.getMonth(),st.getDate()+k))); return out; }
 var deskMQ=null; try{ deskMQ=window.matchMedia("(min-width: 900px)"); var onMQ=function(){ render(); }; deskMQ.addEventListener?deskMQ.addEventListener("change",onMQ):deskMQ.addListener(onMQ); }catch(e){}
@@ -802,6 +806,8 @@ function fitGrid(){
 }
 var fitTimer=null; window.addEventListener("resize",function(){ clearTimeout(fitTimer); fitTimer=setTimeout(function(){ if(authState==="in"&&!ui.sheet&&!ui.msheet&&!ui.ssheet) render(); },150); });
 function placeGrid(keep){
+  var sc0=document.getElementById("tgscroll");
+  if(sc0&&keep){ sc0.scrollTop=keep.t; sc0.scrollLeft=keep.l; }   /* restore first, so a re-fit keeps the position */
   if(fitGrid()) return;
   var sc=document.getElementById("tgscroll"), g=ui._grid; if(!sc||!g) return;
   var HOUR=g.hp||60;
@@ -811,6 +817,11 @@ function placeGrid(keep){
     var sticky=sc.querySelector(".tg-sticky");
     sc.scrollTop=Math.max(0,target);
     if(g.today>0){ var colW=(sc.querySelector(".tg-inner").scrollWidth-g.tcol)/(sc.querySelectorAll(".tg-col").length||1); sc.scrollLeft=Math.max(0,g.today*colW-colW*0.3); }
+  }
+  /* when a new week opens, swipe to today's column once (phones) */
+  if(g.key!==ui._hKey){
+    ui._hKey=g.key;
+    if(!g.desk && g.today>0){ var cw=(sc.querySelector(".tg-inner").scrollWidth-g.tcol)/(sc.querySelectorAll(".tg-col").length||1); sc.scrollLeft=Math.max(0,g.today*cw-cw*0.3); }
   }
   ui._lastKey=g.key;
 }
