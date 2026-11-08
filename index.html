@@ -367,6 +367,9 @@ button{cursor:pointer}
   .tg-compact .blk.short{flex-direction:column;align-items:stretch;padding:2px 3px}
   .tg-compact .blk.short .blk-n{font-size:9.5px;white-space:normal;overflow:hidden}
 }
+.blk{overflow:clip}
+.blk-c{display:flex;flex-direction:column;gap:2px;position:sticky;top:calc(var(--stk,0px) + 4px);min-width:0}
+.blk.short .blk-c{flex-direction:row;align-items:center;gap:6px}
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -732,7 +735,7 @@ function renderTimeGrid(dates){
   }); });
   hi=Math.min(hi,24*60);
   var desk=isDesk(), wide=!desk&&dates.length>1, compact=false;
-  var HP = desk ? HOUR : (ui.hp||36);
+  var HP = desk ? HOUR : 56;
   var hours=(hi-lo)/60, height=hours*HP;
   var tcol=desk?64:44;
   var dayEvs=perDay.map(function(its){
@@ -780,10 +783,10 @@ function renderTimeGrid(dates){
         var du=dual(i);
         return '<div class="blk'+(te?" te":"")+du.cls+(short?" short":"")+(ev.ncol>1&&dates.length>1?" narrow":"")+'" style="--c:'+evColor(i)+du.css+';top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 2px);width:calc('+w+'% - 4px)"'+
           (te?' title="'+esc(i.title+(i.location?" · "+i.location:""))+'"':' title="'+esc(byLine(i))+'" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
-          '<div class="blk-t"><span>'+esc(i.start)+(i.end?'<span class="end">–'+esc(i.end)+'</span>':'')+'</span>'+(i.who?'<em class="who who-'+i.who+'">'+PEOPLE[i.who].name+'</em>':'')+'</div>'+
+          '<div class="blk-c"><div class="blk-t"><span>'+esc(i.start)+(i.end?'<span class="end">–'+esc(i.end)+'</span>':'')+'</span>'+(i.who?'<em class="who who-'+i.who+'">'+PEOPLE[i.who].name+'</em>':'')+'</div>'+
           '<div class="blk-n" lang="nl">'+esc(i.title)+'</div>'+
           (i.location&&!short?'<div class="blk-l" lang="nl">'+esc(i.location)+'</div>':'')+
-        '</div>';
+        '</div></div>';
       }).join("");
       var line = dates[k]===TODAY && nowM>=lo && nowM<=hi ? '<div class="nowline" style="top:'+((nowM-lo)/60*HP)+'px"></div>' : '';
       return '<div class="tg-col'+(dates[k]===TODAY?" today":"")+'" data-act="slot" data-date="'+dates[k]+'" data-lo="'+lo+'" data-hp="'+HP+'" style="background-size:100% '+HP+'px">'+blocks+line+'</div>';
@@ -795,13 +798,16 @@ function renderTimeGrid(dates){
 function weekDates(){ var st=weekStart(ui.sel), out=[]; for(var k=0;k<7;k++) out.push(iso(new Date(st.getFullYear(),st.getMonth(),st.getDate()+k))); return out; }
 var deskMQ=null; try{ deskMQ=window.matchMedia("(min-width: 900px)"); var onMQ=function(){ render(); }; deskMQ.addEventListener?deskMQ.addEventListener("change",onMQ):deskMQ.addListener(onMQ); }catch(e){}
 
+/* Phone: the page itself never scrolls; the calendar box fills the rest of the screen and scrolls inside. */
 function fitGrid(){
-  var sc=document.getElementById("tgscroll"), g=ui._grid; if(!sc||!g||g.desk) return false;
-  var sticky=sc.querySelector(".tg-sticky"), top=sc.getBoundingClientRect().top+window.scrollY;
-  var reserve=86 + (parseFloat(getComputedStyle(document.querySelector(".wrap")).paddingLeft)||0)*0;
-  var avail=window.innerHeight - top - (sticky?sticky.offsetHeight:0) - reserve - 4;
-  var hp=Math.max(18, Math.min(72, Math.floor(avail/g.hours)));
-  if(Math.abs(hp-(ui.hp||0))>=1 && !ui._fitting){ ui.hp=hp; ui._fitting=true; render(); ui._fitting=false; return true; }
+  var sc=document.getElementById("tgscroll"), g=ui._grid; if(!sc||!g) return false;
+  var st0=sc.querySelector(".tg-sticky"); if(st0) sc.style.setProperty("--stk", st0.offsetHeight+"px");
+  if(g.desk) return false;
+  var top=sc.getBoundingClientRect().top+window.scrollY;
+  var reserve=86;
+  var h=Math.max(220, Math.floor(window.innerHeight - top - reserve));
+  sc.style.height=h+"px"; sc.style.maxHeight=h+"px";
+  var st=sc.querySelector(".tg-sticky"); if(st) sc.style.setProperty("--stk", st.offsetHeight+"px");
   return false;
 }
 var fitTimer=null; window.addEventListener("resize",function(){ clearTimeout(fitTimer); fitTimer=setTimeout(function(){ if(authState==="in"&&!ui.sheet&&!ui.msheet&&!ui.ssheet) render(); },150); });
