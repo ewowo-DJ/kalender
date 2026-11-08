@@ -16,7 +16,7 @@
 /* Layout: one column, month grid on top, the chosen day's agenda below, a floating Add button. */
 :root{
   --bg:#f3f4f8; --surface:#ffffff; --ink:#161a2b; --muted:#5f6680; --line:#dde0ea;
-  --accent:#3552d4; --accent-soft:#e6eafc; --task:#b5700a; --task-soft:#fbf0dc; --danger:#c3324f; --ew:#16707f; --ew-soft:#dcf0f2; --he:#b8457a; --he-soft:#f8e1ec;
+  --accent:#3552d4; --accent-soft:#e6eafc; --task:#b5700a; --task-soft:#fbf0dc; --danger:#c3324f; --bday:#d9467a; --bday-soft:#fbe4ec; --ew:#16707f; --ew-soft:#dcf0f2; --he:#b8457a; --he-soft:#f8e1ec;
   --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
   --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme:light;
@@ -24,13 +24,13 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#0f111a; --surface:#181b27; --ink:#e8eaf3; --muted:#9aa1b9; --line:#2a2f42;
-    --accent:#8197ff; --accent-soft:#232a4d; --task:#f0b44c; --task-soft:#3a2d14; --danger:#ff7a93; --ew:#6fd0de; --ew-soft:#173b42; --he:#f59cc4; --he-soft:#4a2236;
+    --accent:#8197ff; --accent-soft:#232a4d; --task:#f0b44c; --task-soft:#3a2d14; --danger:#ff7a93; --bday:#ff86ad; --bday-soft:#4a1f30; --ew:#6fd0de; --ew-soft:#173b42; --he:#f59cc4; --he-soft:#4a2236;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0f111a; --surface:#181b27; --ink:#e8eaf3; --muted:#9aa1b9; --line:#2a2f42;
-  --accent:#8197ff; --accent-soft:#232a4d; --task:#f0b44c; --task-soft:#3a2d14; --danger:#ff7a93; --ew:#6fd0de; --ew-soft:#173b42; --he:#f59cc4; --he-soft:#4a2236;
+  --accent:#8197ff; --accent-soft:#232a4d; --task:#f0b44c; --task-soft:#3a2d14; --danger:#ff7a93; --bday:#ff86ad; --bday-soft:#4a1f30; --ew:#6fd0de; --ew-soft:#173b42; --he:#f59cc4; --he-soft:#4a2236;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -253,6 +253,16 @@ button{cursor:pointer}
 .nowline::before{content:"";position:absolute;left:-5px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--danger)}
 
 .sheet-h h3 small.by{display:block;font:500 12px/1.3 var(--body);color:var(--muted);margin-top:3px}
+.item.bday{border-color:color-mix(in srgb,var(--bday) 35%,var(--line));background:color-mix(in srgb,var(--bday) 6%,var(--surface))}
+.cake{flex:none;width:30px;height:30px;border-radius:9px;background:var(--bday-soft);color:var(--bday);display:grid;place-items:center}
+.cake svg{width:18px;height:18px}
+.bdays{display:flex;gap:12px;align-items:flex-start;background:color-mix(in srgb,var(--bday) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--bday) 30%,var(--line));border-radius:12px;padding:10px 12px;font-size:14px}
+.bdays>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.bdays b{color:var(--bday);font-size:13px}
+.chip .ck{flex:none;display:grid;color:var(--bday)} .chip .ck svg{width:13px;height:13px}
+.check-row{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);margin-top:2px}
+.field .check-row input{width:18px;height:18px;min-height:0;padding:0;flex:none;margin:0;accent-color:var(--bday)}
+.tabs.kinds button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -340,6 +350,7 @@ var ICON = {
   right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  cake:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21h16M5 21v-7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7"/><path d="M5 16c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 4.5 0"/><path d="M12 12V8M12 4.5c.6.8.6 1.6 0 2.2-.6-.6-.6-1.4 0-2.2z"/></svg>',
   tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
@@ -347,8 +358,22 @@ var ICON = {
   note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h9"/></svg>'
 };
 
+/* Birthdays are stored once and shown every year on the same day (29 Feb → 28 Feb in other years). */
+function bdayOn(i, date){
+  if(i.type!=="birthday" || !i.date) return false;
+  var md=i.date.slice(5), y=+date.slice(0,4);
+  if(md==="02-29" && !((y%4===0&&y%100!==0)||y%400===0)) md="02-28";
+  return date.slice(5)===md && (!i.yearKnown || date>=i.date);
+}
+function bdayCopy(i, date){
+  var c=Object.assign({}, i); c.date=date; c.age=i.yearKnown ? (+date.slice(0,4)) - (+i.date.slice(0,4)) : null; return c;
+}
+function bdayTitle(i){ return "Verjaardag "+i.title+(i.age!=null&&i.age>0?" ("+i.age+")":""); }
 function itemsOn(date){
-  return S.items.filter(function(i){return i.date===date && visible(i);}).sort(function(a,b){
+  return S.items.filter(function(i){ return visible(i) && (i.type==="birthday" ? bdayOn(i,date) : i.date===date); })
+    .map(function(i){ return i.type==="birthday" ? bdayCopy(i,date) : i; })
+    .sort(function(a,b){
+    if((a.type==="birthday")!==(b.type==="birthday")) return a.type==="birthday"?-1:1;
     var ta=a.start||"99:99", tb=b.start||"99:99";
     if (ta!==tb) return ta<tb?-1:1;
     return a.type===b.type?0:(a.type==="event"?-1:1);
@@ -367,12 +392,12 @@ function renderMonth(){
     var s=iso(d), its=itemsOn(s), marks="";
     if(isDesk()){
       its.slice(0,4).forEach(function(i){
-        marks += '<span class="mchip'+(i.type==="task"?" task":"")+(i.done?" done":"")+'" style="--c:'+evColor(i)+'">'+(i.start?'<b>'+esc(i.start)+'</b> ':'')+esc(i.title)+'</span>';
+        marks += '<span class="mchip'+(i.type==="task"?" task":"")+(i.done?" done":"")+'" style="--c:'+evColor(i)+'">'+(i.start?'<b>'+esc(i.start)+'</b> ':'')+esc(i.type==="birthday"?bdayTitle(i):i.title)+'</span>';
       });
       if(its.length>4) marks+='<span class="more">+'+(its.length-4)+' meer</span>';
     } else
     its.slice(0,3).forEach(function(i){
-      marks += i.type==="task" ? '<i class="t"></i>' : '<i style="background:'+(COLORS[i.color]||COLORS.blue)+'"></i>';
+      marks += i.type==="task" ? '<i class="t"></i>' : '<i style="background:'+evColor(i)+'"></i>';
     });
     var cls="day"+(d.getMonth()!==m?" out":"")+(s===TODAY?" today":"")+(s===ui.sel?" sel":"");
     var label=nice(s)+(its.length?", "+its.length+" item"+(its.length>1?"s":""):"");
@@ -382,6 +407,15 @@ function renderMonth(){
 }
 
 function renderItem(i){
+  if(i.type==="birthday"){
+    return '<div class="item bday" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0">'+
+      '<span class="cake">'+ICON.cake+'</span>'+
+      '<div class="body"><div class="title-row"><div class="title">'+esc(bdayTitle(i))+'</div>'+chip(i.who)+'</div>'+
+      (i.age!=null&&i.age>0?'<div class="meta">Wordt vandaag '+i.age+' jaar</div>':'')+
+      (i.notes?'<div class="meta">'+ICON.note+'<span>'+esc(i.notes)+'</span></div>':'')+
+      (byLine(i)?'<div class="meta"><span class="src">'+esc(byLine(i))+'</span></div>':'')+
+    '</div></div>';
+  }
   var mapUrl = i.location ? "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(i.location) : "";
   if(i.type==="event"){
     var te=i.source==="timeedit";
@@ -429,29 +463,35 @@ function weekLabel(){
 }
 
 function renderSheet(){
-  var it=ui.sheet, isEv=it.type==="event";
+  var it=ui.sheet, kind=it.type, isEv=kind==="event", isB=kind==="birthday";
   var sw=Object.keys(COLORS).map(function(c){
     return '<button type="button" style="background:'+COLORS[c]+'" aria-label="'+c+'" aria-pressed="'+(it.color===c)+'" data-act="color" data-color="'+c+'"></button>';
   }).join("");
+  var NAMES={event:["Nieuwe afspraak","Afspraak wijzigen","Afspraak toevoegen"], task:["Nieuwe taak","Taak wijzigen","Taak toevoegen"], birthday:["Nieuwe verjaardag","Verjaardag wijzigen","Verjaardag toevoegen"]}[kind];
+  var kinds=[["event","Afspraak"],["task","Taak"],["birthday","Verjaardag"]];
   return '<div class="scrim" data-act="scrim"><form class="sheet" id="sheet" novalidate>'+
-    '<div class="sheet-h"><h3>'+(it.id?(isEv?"Afspraak wijzigen":"Taak wijzigen"):(isEv?"Nieuwe afspraak":"Nieuwe taak"))+(it.id&&byLine(it)?'<small class="by">'+esc(byLine(it))+'</small>':'')+'</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
-    (it.id?'':'<div class="tabs" role="group" aria-label="Soort"><button type="button" data-act="type" data-type="event" aria-pressed="'+isEv+'">Afspraak</button><button type="button" data-act="type" data-type="task" aria-pressed="'+(!isEv)+'">Taak</button></div>')+
-    '<div class="field"><label id="l-who">Voor wie?</label><div class="tabs who-pick" role="radiogroup" aria-labelledby="l-who">'+
+    '<div class="sheet-h"><h3>'+(it.id?NAMES[1]:NAMES[0])+(it.id&&byLine(it)?'<small class="by">'+esc(byLine(it))+'</small>':'')+'</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
+    (it.id?'':'<div class="tabs kinds" role="group" aria-label="Soort">'+kinds.map(function(k){ return '<button type="button" data-act="type" data-type="'+k[0]+'" aria-pressed="'+(kind===k[0])+'">'+k[1]+'</button>'; }).join("")+'</div>')+
+    '<div class="field"><label id="l-who">'+(isB?"Voor wie is dit belangrijk?":"Voor wie?")+'</label><div class="tabs who-pick" role="radiogroup" aria-labelledby="l-who">'+
       ["ewoud","helen","both"].map(function(w){return '<button type="button" role="radio" class="wp-'+w+'" data-act="who" data-who="'+w+'" aria-checked="'+(it.who===w)+'" aria-pressed="'+(it.who===w)+'">'+PEOPLE[w].name+'</button>';}).join("")+
     '</div></div>'+
-    '<div class="field"><label for="f-title">Titel</label><input id="f-title" value="'+esc(it.title)+'" placeholder="'+(isEv?"bv. Lunch met Sam":"bv. De bank bellen")+'" autocomplete="off"></div>'+
-    '<div class="field"><label for="f-date">Datum</label><input id="f-date" type="date" value="'+esc(it.date)+'"></div>'+
+    '<div class="field"><label for="f-title">'+(isB?"Naam":"Titel")+'</label><input id="f-title" value="'+esc(it.title)+'" placeholder="'+(isB?"bv. Mama":isEv?"bv. Lunch met Sam":"bv. De bank bellen")+'" autocomplete="off"></div>'+
+    '<div class="field"><label for="f-date">'+(isB?"Geboortedatum":"Datum")+'</label><input id="f-date" type="date" value="'+esc(it.date)+'">'+
+      (isB?'<label class="check-row"><input type="checkbox" id="f-yk"'+(it.yearKnown===false?" checked":"")+'> Geboortejaar onbekend (dan tonen we geen leeftijd)</label>':'')+
+    '</div>'+
     (isEv?
       '<div class="row"><div class="field"><label for="f-start">Begin</label><input id="f-start" type="time" value="'+esc(it.start)+'"></div><div class="field"><label for="f-end">Einde</label><input id="f-end" type="time" value="'+esc(it.end)+'"></div></div>'+
       '<div class="field"><label for="f-loc">Locatie</label><input id="f-loc" value="'+esc(it.location)+'" placeholder="Adres of plaats" autocomplete="off"></div>'+
       '<div class="field"><label>Kleur</label><div class="swatches">'+sw+'</div></div>'
+    : isB ? ''
     :
       '<div class="field"><label for="f-start">Tijd (optioneel)</label><input id="f-start" type="time" value="'+esc(it.start)+'"></div>'
     )+
-    '<div class="field"><label for="f-notes">Notities</label><textarea id="f-notes" placeholder="Optioneel">'+esc(it.notes)+'</textarea></div>'+
+    '<div class="field"><label for="f-notes">'+(isB?"Notities (bv. cadeau-ideeën)":"Notities")+'</label><textarea id="f-notes" placeholder="Optioneel">'+esc(it.notes)+'</textarea></div>'+
+    (isB?'<p class="hint">Komt elk jaar terug, en verschijnt een week op voorhand bij "Binnenkort jarig".</p>':'')+
     '<p class="err" role="alert">'+esc(ui.err)+'</p>'+
     '<div class="actions">'+(it.id?'<button type="button" class="del'+(ui.armed?" armed":"")+'" data-act="delete">'+(ui.armed?"Tik nogmaals om te verwijderen":"Verwijderen")+'</button>':'')+
-    '<button type="submit" class="primary">'+(it.id?"Wijzigingen opslaan":(isEv?"Afspraak toevoegen":"Taak toevoegen"))+'</button></div>'+
+    '<button type="submit" class="primary">'+(it.id?"Wijzigingen opslaan":NAMES[2])+'</button></div>'+
   '</form></div>';
 }
 
@@ -482,7 +522,7 @@ function isoWeek(dstr){
   var w1=new Date(d.getFullYear(),0,4,12);
   return 1+Math.round(((d-w1)/864e5-3+((w1.getDay()+6)%7))/7);
 }
-function evColor(i){ return i.type==="task" ? "var(--task)" : (COLORS[i.color]||COLORS.blue); }
+function evColor(i){ return i.type==="task" ? "var(--task)" : i.type==="birthday" ? "var(--bday)" : (COLORS[i.color]||COLORS.blue); }
 /* Place overlapping events side by side, like TimeEdit. */
 function layoutDay(evs){
   evs.sort(function(a,b){ return a.s-b.s || b.e-a.e; });
@@ -528,7 +568,7 @@ function renderTimeGrid(dates){
         var te=i.source==="timeedit", task=i.type==="task";
         return '<div class="chip'+(task?" task":"")+(i.done?" done":"")+'" style="--c:'+evColor(i)+'"'+(te?'':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
           (task?'<button class="mini-check" role="checkbox" aria-checked="'+(!!i.done)+'" aria-label="Klaar" data-act="toggle" data-id="'+i.id+'">'+ICON.tick+'</button>':'')+
-          '<span>'+(i.start&&task?esc(i.start)+' ':'')+esc(i.title)+'</span>'+(i.who&&i.who!=="both"?'<em class="dot-'+i.who+'" title="'+PEOPLE[i.who].name+'"></em>':'')+'</div>';
+          (i.type==="birthday"?'<i class="ck">'+ICON.cake+'</i>':'')+'<span>'+(i.start&&task?esc(i.start)+' ':'')+esc(i.type==="birthday"?bdayTitle(i):i.title)+'</span>'+(i.who&&i.who!=="both"?'<em class="dot-'+i.who+'" title="'+PEOPLE[i.who].name+'"></em>':'')+'</div>';
       }).join("")+'</div>';
     }).join("")+'</div>';
 
@@ -582,6 +622,19 @@ setInterval(function(){
   var t=iso(new Date()); if(t!==TODAY){ if(ui.sel===TODAY) ui.sel=t; TODAY=t; ui.month=ui.sel.slice(0,7); }
   if(ui.tab==="cal" && /^(day|week)$/.test(ui.view)) render();
 }, 60000);
+function upcomingBdays(){
+  var out=[];
+  for(var k=0;k<=7;k++){
+    var d=addDays(TODAY,k);
+    S.items.forEach(function(i){ if(visible(i) && bdayOn(i,d)) out.push({i:bdayCopy(i,d), k:k}); });
+  }
+  if(!out.length) return "";
+  return '<div class="bdays"><span class="cake">'+ICON.cake+'</span><div><b>Binnenkort jarig</b>'+
+    out.map(function(o){
+      var when = o.k===0 ? "vandaag" : o.k===1 ? "morgen" : DOW_LONG[parse(o.i.date).getDay()]+" "+parse(o.i.date).getDate()+" "+MONTHS_SHORT[parse(o.i.date).getMonth()];
+      return '<span>'+esc(o.i.title)+(o.i.age>0?' wordt '+o.i.age:'')+' · '+when+'</span>';
+    }).join("")+'</div></div>';
+}
 function appNav(){
   return '<nav class="appnav" aria-label="Onderdelen">'+
     '<button data-act="tab" data-tab="cal" aria-pressed="'+(ui.tab==="cal")+'">'+ICON.cal+'Kalender</button>'+
@@ -625,6 +678,7 @@ function renderApp(){
       '<button class="cls-toggle" data-act="classes" aria-pressed="'+ui.classes+'">Lessen '+(ui.classes?"zichtbaar":"verborgen")+'</button>'+
     '</div></div>'+
     (loadState?'<div class="note"><span>'+esc(loadState)+'</span></div>':'')+
+    upcomingBdays()+
     body+
     (statusText?'<div class="status">'+esc(statusText)+'</div>':'')+
     '<div class="foot"><span>Ingelogd als '+esc(userEmail)+'</span><button data-act="logout">Uitloggen</button></div>'+
@@ -830,6 +884,7 @@ function openSheet(item){ ui.sheet=item; ui.err=""; ui.armed=false; render(); se
 function readForm(){
   var it=ui.sheet, g=function(id){var e=document.getElementById(id);return e?e.value.trim():"";};
   it.title=g("f-title"); it.date=g("f-date")||it.date; it.start=g("f-start"); it.notes=g("f-notes");
+  if(it.type==="birthday"){ var yk=document.getElementById("f-yk"); if(yk) it.yearKnown=!yk.checked; }
   if(it.type==="event"){ it.end=g("f-end"); it.location=g("f-loc"); }
 }
 function shift(n){
@@ -861,7 +916,7 @@ document.addEventListener("click",function(e){
     case "classes": ui.classes=!ui.classes; saveUI(); render(); break;
     case "filter": ui.who=t.dataset.who; saveUI(); render(); break;
     case "add": if(!canWrite) break; openSheet({type:"event",who:"",title:"",date:ui.sel,start:"",end:"",location:"",notes:"",color:"blue",done:false}); break;
-    case "edit": if(!canWrite) break; var src=S.items.find(function(i){return i.id===t.dataset.id;}); if(src) openSheet(JSON.parse(JSON.stringify(src))); break;
+    case "edit": if(!canWrite) break; var src=S.items.find(function(i){return i.id===t.dataset.id;}); if(src){ var cp=JSON.parse(JSON.stringify(src)); if(cp.type==="birthday"&&cp.yearKnown===false) cp.date=cp.date; openSheet(cp); } break;
     case "toggle": e.stopPropagation(); if(!canWrite) break; var it=S.items.find(function(i){return i.id===t.dataset.id;}); if(it){ var c=JSON.parse(JSON.stringify(it)); c.done=!c.done; it.done=c.done; write(c.id, clean(c)); render(); } break;
     case "close": ui.sheet=null; ui.msheet=null; render(); break;
     case "tab": ui.tab=t.dataset.tab; ui.sheet=null; ui.msheet=null; saveUI(); render(); window.scrollTo(0,0); break;
@@ -893,15 +948,16 @@ document.addEventListener("submit",function(e){
   if(e.target.id==="msheet"){ submitEx(); return; }
   readForm(); var it=ui.sheet;
   if(!it.who){ui.err="Kies voor wie het is: Ewoud, Helen of beiden."; render(); return;}
-  if(!it.title){ui.err="Geef eerst een titel op."; render(); return;}
+  if(!it.title){ui.err=it.type==="birthday"?"Vul de naam in.":"Geef eerst een titel op."; render(); return;}
   if(!it.date){ui.err="Kies een datum."; render(); return;}
   if(it.type==="event"&&it.start&&it.end&&it.end<it.start){ui.err="Het einde ligt voor het begin."; render(); return;}
   if(it.type==="task"){delete it.end; delete it.location; delete it.color;}
+  if(it.type==="birthday"){ ["end","location","color","start","done","age"].forEach(function(k){ delete it[k]; }); it.yearKnown=it.yearKnown!==false; }
   delete it.example;
   if(!it.id){ it.id=uid(); if(userName) it.addedBy=userName; S.items.push(it); }
   else { if(userName) it.editedBy=userName; S.items=S.items.map(function(i){return i.id===it.id?it:i;}); }
   write(it.id, clean(it));
-  ui.sel=it.date; ui.month=it.date.slice(0,7); ui.sheet=null; ui.armed=false;
+  if(it.type!=="birthday"){ ui.sel=it.date; ui.month=it.date.slice(0,7); } ui.sheet=null; ui.armed=false;
   if(ui.who!=="all" && it.who!==ui.who && it.who!=="both") ui.who="all";
   render();
 });
