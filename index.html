@@ -270,6 +270,12 @@ button{cursor:pointer}
 .now-btn svg{width:16px;height:16px}
 .now-btn[aria-current="true"]{background:var(--accent-soft);color:var(--accent)}
 @media (max-width:420px){ .now-btn{padding:0 10px;font-size:13px} .now-btn svg{display:none} }
+.datef{display:flex;gap:8px;position:relative}
+.datef input[type=text]{flex:1;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.datef .icon-btn{width:44px;height:44px}
+.datef .native{position:absolute;right:0;bottom:0;width:44px;height:44px;opacity:0;pointer-events:none;border:0;padding:0}
+.date-read{font-size:12px;color:var(--muted);min-height:1em}
+.timef{font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -378,7 +384,7 @@ function bdayOn(i, date){
   return date.slice(5)===md && (!i.yearKnown || date>=i.date);
 }
 function bdayCopy(i, date){
-  var c=Object.assign({}, i); c.date=date; c.age=i.yearKnown ? (+date.slice(0,4)) - (+i.date.slice(0,4)) : null; return c;
+  var c=Object.assign({}, i); c._born=i.date; c.date=date; c.age=i.yearKnown ? (+date.slice(0,4)) - (+i.date.slice(0,4)) : null; return c;
 }
 function bdayTitle(i){
   if(i.type==="anniversary") return i.age>0 ? i.age+" jaar samen" : "Samen sinds vandaag";
@@ -432,7 +438,7 @@ function renderItem(i){
     return '<div class="item bday" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0">'+
       '<span class="cake">'+ICON.cake+'</span>'+
       '<div class="body"><div class="title-row"><div class="title">'+esc(bdayTitle(i))+'</div>'+chip(i.who)+'</div>'+
-      (i.age!=null&&i.age>0?'<div class="meta">Wordt vandaag '+i.age+' jaar</div>':'')+
+      '<div class="meta">'+(i.yearKnown===false?'Geboren op '+parse(i.date).getDate()+' '+MONTHS[parse(i.date).getMonth()]:'Geboren op '+longDate(i._born||i.date)+(i.age>0?' · wordt '+i.age+' jaar':''))+'</div>'+
       (i.notes?'<div class="meta">'+ICON.note+'<span>'+esc(i.notes)+'</span></div>':'')+
       (byLine(i)?'<div class="meta"><span class="src">'+esc(byLine(i))+'</span></div>':'')+
     '</div></div>';
@@ -483,6 +489,53 @@ function weekLabel(){
   return a.getMonth()===b.getMonth() ? a.getDate()+"–"+b.getDate()+" "+MONTHS[a.getMonth()] : a.getDate()+" "+MONTHS_SHORT[a.getMonth()]+" – "+b.getDate()+" "+MONTHS_SHORT[b.getMonth()];
 }
 
+/* ---------- Belgian date field: dd/mm/jjjj, with a calendar button ---------- */
+function fmtBE(isoD){ if(!isoD||!/^\d{4}-\d{2}-\d{2}$/.test(isoD)) return ""; return isoD.slice(8,10)+"/"+isoD.slice(5,7)+"/"+isoD.slice(0,4); }
+function parseBE(t){
+  var m=String(t||"").trim().match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/); if(!m) return "";
+  var d=+m[1], mo=+m[2], y=+m[3], dt=new Date(y,mo-1,d);
+  if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d) return "";
+  return y+"-"+pad(mo)+"-"+pad(d);
+}
+function longDate(isoD){ var d=parse(isoD); return d.getDate()+" "+MONTHS[d.getMonth()]+" "+d.getFullYear(); }
+function dateField(id, label, isoVal, raw){
+  var shown = raw!=null ? raw : fmtBE(isoVal), ok=parseBE(shown);
+  return '<div class="field"><label for="'+id+'">'+label+'</label><div class="datef">'+
+    '<input id="'+id+'" type="text" inputmode="numeric" placeholder="dd/mm/jjjj" maxlength="10" autocomplete="off" value="'+esc(shown)+'">'+
+    '<button type="button" class="icon-btn" data-act="pickdate" data-for="'+id+'" aria-label="Kies op de kalender">'+ICON.cal+'</button>'+
+    '<input type="date" class="native" id="'+id+'-n" value="'+esc(ok||isoVal||"")+'" tabindex="-1" aria-hidden="true">'+
+    '</div><small class="date-read" id="'+id+'-r">'+(ok?esc(cap(DOW_LONG[parse(ok).getDay()])+" "+longDate(ok)):"")+'</small></div>';
+}
+/* read a date field: returns {iso, raw} — raw is kept when the text isn't a valid date yet */
+/* 24-hour time like 09:15; accepts 915, 9.15, 9:15 */
+function normTime(t){
+  t=String(t||"").trim(); if(!t) return {v:"", ok:true};
+  var m=t.match(/^(\d{1,2})[:.h]?(\d{2})$/); if(!m) return {v:t, ok:false};
+  var h=+m[1], mi=+m[2]; if(h>23||mi>59) return {v:t, ok:false};
+  return {v:pad(h)+":"+pad(mi), ok:true};
+}
+document.addEventListener("focusout",function(e){
+  var t=e.target; if(!t.classList||!t.classList.contains("timef")) return;
+  var n=normTime(t.value); if(n.ok) t.value=n.v;
+});
+function readDate(id){ var e=document.getElementById(id); if(!e) return null; var v=e.value.trim(), iso=parseBE(v); return {iso:iso, raw: iso?null:v}; }
+document.addEventListener("input",function(e){
+  var t=e.target; if(!t.closest||!t.closest(".datef")||t.type!=="text") return;
+  var digits=t.value.replace(/\D/g,"");
+  if(/^[\d\/]*$/.test(t.value) && e.inputType && e.inputType.indexOf("delete")<0){
+    var f=digits.slice(0,2)+(digits.length>2?"/"+digits.slice(2,4):"")+(digits.length>4?"/"+digits.slice(4,8):"");
+    if(digits.length===2||digits.length===4) f+="/";
+    t.value=f;
+  }
+  var iso=parseBE(t.value), r=document.getElementById(t.id+"-r");
+  if(r) r.textContent = iso ? cap(DOW_LONG[parse(iso).getDay()])+" "+longDate(iso) : (t.value.length>=10?"Geen geldige datum":"");
+  var n=document.getElementById(t.id+"-n"); if(n&&iso) n.value=iso;
+});
+document.addEventListener("change",function(e){
+  var t=e.target; if(!t.classList||!t.classList.contains("native")) return;
+  var txt=document.getElementById(t.id.slice(0,-2)); if(txt&&t.value){ txt.value=fmtBE(t.value); txt.dispatchEvent(new Event("input",{bubbles:true})); }
+});
+
 function renderSheet(){
   var it=ui.sheet, kind=it.type, isEv=kind==="event", isB=kind==="birthday";
   var sw=Object.keys(COLORS).map(function(c){
@@ -497,16 +550,15 @@ function renderSheet(){
       ["ewoud","helen","both"].map(function(w){return '<button type="button" role="radio" class="wp-'+w+'" data-act="who" data-who="'+w+'" aria-checked="'+(it.who===w)+'" aria-pressed="'+(it.who===w)+'">'+PEOPLE[w].name+'</button>';}).join("")+
     '</div></div>'+
     '<div class="field"><label for="f-title">'+(isB?"Naam":"Titel")+'</label><input id="f-title" value="'+esc(it.title)+'" placeholder="'+(isB?"bv. Mama":isEv?"bv. Lunch met Sam":"bv. De bank bellen")+'" autocomplete="off"></div>'+
-    '<div class="field"><label for="f-date">'+(isB?"Geboortedatum":"Datum")+'</label><input id="f-date" type="date" value="'+esc(it.date)+'">'+
+    dateField("f-date", isB?"Geboortedatum":"Datum", it.date, it._dateRaw)+
       (isB?'<label class="check-row"><input type="checkbox" id="f-yk"'+(it.yearKnown===false?" checked":"")+'> Geboortejaar onbekend (dan tonen we geen leeftijd)</label>':'')+
-    '</div>'+
     (isEv?
-      '<div class="row"><div class="field"><label for="f-start">Begin</label><input id="f-start" type="time" value="'+esc(it.start)+'"></div><div class="field"><label for="f-end">Einde</label><input id="f-end" type="time" value="'+esc(it.end)+'"></div></div>'+
+      '<div class="row"><div class="field"><label for="f-start">Begin</label><input id="f-start" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(it.start)+'"></div><div class="field"><label for="f-end">Einde</label><input id="f-end" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(it.end)+'"></div></div>'+
       '<div class="field"><label for="f-loc">Locatie</label><input id="f-loc" value="'+esc(it.location)+'" placeholder="Adres of plaats" autocomplete="off"></div>'+
       '<div class="field"><label>Kleur</label><div class="swatches">'+sw+'</div></div>'
     : isB ? ''
     :
-      '<div class="field"><label for="f-start">Tijd (optioneel)</label><input id="f-start" type="time" value="'+esc(it.start)+'"></div>'
+      '<div class="field"><label for="f-start">Tijd (optioneel)</label><input id="f-start" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(it.start)+'"></div>'
     )+
     '<div class="field"><label for="f-notes">'+(isB?"Notities (bv. cadeau-ideeën)":"Notities")+'</label><textarea id="f-notes" placeholder="Optioneel">'+esc(it.notes)+'</textarea></div>'+
     (isB?'<p class="hint">Komt elk jaar terug, en verschijnt een week op voorhand bij "Binnenkort jarig".</p>':'')+
@@ -858,7 +910,7 @@ function renderExSheet(){
     '<div class="field"><label>'+(isSettle?"Wie betaalde terug?":"Wie betaalde?")+'</label><div class="tabs who-pick">'+seg("paidBy","ewoud","Ewoud",it.paidBy)+seg("paidBy","helen","Helen",it.paidBy)+'</div></div>'+
     (isSettle?'':'<div class="field"><label>Hoe verdelen?</label><div class="tabs">'+seg("split","half","50/50",it.split)+seg("split","full","Alles terugbetalen",it.split)+'</div>'+
       '<p class="hint">'+esc(splitHint(it))+'</p></div>')+
-    '<div class="field"><label for="x-date">Datum</label><input id="x-date" type="date" value="'+esc(it.date)+'"></div>'+
+    dateField("x-date", "Datum", it.date, it._dateRaw)+
     '<p class="err" role="alert">'+esc(ui.err)+'</p>'+
     '<div class="actions">'+(it.id?'<button type="button" class="del'+(ui.armed?" armed":"")+'" data-act="delex">'+(ui.armed?"Tik nogmaals om te verwijderen":"Verwijderen")+'</button>':'')+
     '<button type="submit" class="primary">'+(it.id?"Wijzigingen opslaan":(isSettle?"Terugbetaling opslaan":"Uitgave toevoegen"))+'</button></div>'+
@@ -875,7 +927,7 @@ function readExForm(){
   var v;
   if((v=g("x-desc"))!==null) it.desc=v;
   if((v=g("x-amt"))!==null) it.amountStr=v;
-  if((v=g("x-date"))!==null) it.date=v||it.date;
+  var xd=readDate("x-date"); if(xd){ if(xd.iso) it.date=xd.iso; it._dateRaw=xd.raw; }
 }
 function openEx(kind, src){
   var b=balance();
@@ -889,6 +941,7 @@ function submitEx(){
   readExForm(); var it=ui.msheet, c=parseAmount(it.amountStr);
   if(it.kind!=="settle" && !it.desc){ ui.err="Vul in waarvoor het was."; render(); return; }
   if(isNaN(c)||c<=0){ ui.err="Vul een bedrag in, bv. 12,50."; render(); return; }
+  if(it._dateRaw){ ui.err="Vul de datum in als dd/mm/jjjj."; render(); return; }
   if(!it.paidBy){ ui.err="Kies wie betaalde."; render(); return; }
   if(it.kind!=="settle" && !it.split){ ui.err="Kies 50/50 of alles terugbetalen."; render(); return; }
   var body={kind:it.kind, desc:it.kind==="settle"?"":it.desc, amount:c, paidBy:it.paidBy, date:it.date,
@@ -906,9 +959,9 @@ function submitEx(){
 function openSheet(item){ ui.sheet=item; ui.err=""; ui.armed=false; render(); setTimeout(function(){var t=document.getElementById("f-title"); if(t&&!item.id) t.focus();},30); }
 function readForm(){
   var it=ui.sheet, g=function(id){var e=document.getElementById(id);return e?e.value.trim():"";};
-  it.title=g("f-title"); it.date=g("f-date")||it.date; it.start=g("f-start"); it.notes=g("f-notes");
+  it.title=g("f-title"); var dd=readDate("f-date"); if(dd){ if(dd.iso) it.date=dd.iso; it._dateRaw=dd.raw; } var ts=normTime(g("f-start")); it.start=ts.v; it._timeErr=!ts.ok; it.notes=g("f-notes");
   if(it.type==="birthday"){ var yk=document.getElementById("f-yk"); if(yk) it.yearKnown=!yk.checked; }
-  if(it.type==="event"){ it.end=g("f-end"); it.location=g("f-loc"); }
+  if(it.type==="event"){ var te2=normTime(g("f-end")); it.end=te2.v; it._timeErr=it._timeErr||!te2.ok; it.location=g("f-loc"); }
 }
 function shift(n){
   if(ui.view==="day"){ ui.sel=addDays(ui.sel,n); ui.month=ui.sel.slice(0,7); render(); return; }
@@ -925,6 +978,9 @@ document.addEventListener("click",function(e){
   switch(act){
     case "login": doLogin(); break;
     case "logout": unsub(); firebase.auth().signOut(); break;
+    case "pickdate":
+      var nat=document.getElementById(t.dataset.for+"-n");
+      if(nat){ try{ nat.showPicker(); }catch(err){ nat.focus(); nat.click(); } } break;
     case "goday": ui.sel=t.dataset.date; ui.month=ui.sel.slice(0,7); ui.view="day"; saveUI(); render(); break;
     case "slot":
       if(e.target!==t || !canWrite) break;
@@ -972,7 +1028,9 @@ document.addEventListener("submit",function(e){
   readForm(); var it=ui.sheet;
   if(!it.who){ui.err="Kies voor wie het is: Ewoud, Helen of beiden."; render(); return;}
   if(!it.title){ui.err=it.type==="birthday"?"Vul de naam in.":"Geef eerst een titel op."; render(); return;}
-  if(!it.date){ui.err="Kies een datum."; render(); return;}
+  if(!it.date||it._dateRaw){ui.err="Vul de datum in als dd/mm/jjjj, bv. 29/01/2004."; render(); return;}
+  if(it._timeErr){ui.err="Vul de tijd in als uu:mm, bv. 09:15 of 14:30."; render(); return;}
+  delete it._dateRaw; delete it._timeErr;
   if(it.type==="event"&&it.start&&it.end&&it.end<it.start){ui.err="Het einde ligt voor het begin."; render(); return;}
   if(it.type==="task"){delete it.end; delete it.location; delete it.color;}
   if(it.type==="birthday"){ ["end","location","color","start","done","age"].forEach(function(k){ delete it[k]; }); it.yearKnown=it.yearKnown!==false; }
