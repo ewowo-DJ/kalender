@@ -375,6 +375,9 @@ button{cursor:pointer}
 .own-pick.sm.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
 .bd-prev{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:4px 8px;border-radius:7px;background:var(--bday-soft);color:var(--bday)}
 .bd-prev svg{width:14px;height:14px}
+html.lockpage,html.lockpage body{height:100%;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;width:100%}
+html.lockpage #root{height:100%;overflow:hidden}
+.tg-scroll{overscroll-behavior:contain;touch-action:pan-x pan-y}
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -849,7 +852,8 @@ function placeGrid(keep){
   var HOUR=g.hp||60;
   if(keep){ sc.scrollTop=keep.t; sc.scrollLeft=keep.l; }
   else {
-    var target = g.nowTop!=null ? g.nowTop-HOUR*1.5 : 0;
+    var boxH=sc.clientHeight-((sc.querySelector(".tg-sticky")||{}).offsetHeight||0);
+    var target = g.nowTop!=null ? g.nowTop-Math.max(HOUR, boxH*0.33) : 0;
     var sticky=sc.querySelector(".tg-sticky");
     sc.scrollTop=Math.max(0,target);
     if(g.today>0){ var colW=(sc.querySelector(".tg-inner").scrollWidth-g.tcol)/(sc.querySelectorAll(".tg-col").length||1); sc.scrollLeft=Math.max(0,g.today*colW-colW*0.3); }
@@ -1102,6 +1106,9 @@ function renderApp(){
   var oldSc=document.getElementById("tgscroll"), keep=oldSc&&ui._lastKey===(ui._grid&&ui._grid.key)?{t:oldSc.scrollTop,l:oldSc.scrollLeft}:null;
   if(!/^(day|week)$/.test(ui.view)) ui._grid=null;
   document.getElementById("root").innerHTML=h;
+  var lock = !isDesk() && ui.tab==="cal" && /^(day|week)$/.test(ui.view);
+  document.documentElement.classList.toggle("lockpage", lock);
+  if(lock) window.scrollTo(0,0);
   fitTitle();
   placeGrid(keep);
   if(active){var el=document.getElementById(active); if(el) el.focus();}
@@ -1412,7 +1419,8 @@ document.addEventListener("submit",function(e){
 render();
 start();
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
-document.addEventListener('visibilitychange',function(){ if(!document.hidden){ var t=iso(new Date()); if(t!==TODAY){ if(ui.sel===TODAY) ui.sel=t; TODAY=t; ui.month=ui.sel.slice(0,7); render(); } } });
+document.addEventListener('visibilitychange',function(){ if(!document.hidden && authState==="in" && !ui.sheet && !ui.msheet && !ui.ssheet){ ui._lastKey=null; ui._hKey=null; render(); }
+  if(!document.hidden){ var t=iso(new Date()); if(t!==TODAY){ if(ui.sel===TODAY) ui.sel=t; TODAY=t; ui.month=ui.sel.slice(0,7); render(); } } });
 })();
 </script>
 </body>
