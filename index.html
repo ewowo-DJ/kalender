@@ -761,12 +761,8 @@ function layoutDay(evs){
 function renderTimeGrid(dates){
   var perDay=dates.map(function(d){ return itemsOn(d); });
   /* Hour range: 08:00–19:00, stretched to fit everything that week. */
-  var lo=8*60, hi=19*60;
-  perDay.forEach(function(its){ its.forEach(function(i){
-    var s=mins(i.start), e=mins(i.end);
-    if(i.type==="event" && s!=null){ lo=Math.min(lo, Math.floor(s/60)*60); hi=Math.max(hi, Math.ceil(((e!=null&&e>s)?e:s+60)/60)*60); }
-  }); });
-  hi=Math.min(hi,24*60);
+  /* always the whole day, 00:00–24:00; the box scrolls */
+  var lo=0, hi=24*60;
   var desk=isDesk(), wide=!desk&&dates.length>1, compact=false;
   var HP = desk ? HOUR : 56;
   var hours=(hi-lo)/60, height=hours*HP;
@@ -852,8 +848,8 @@ function placeGrid(keep){
   var HOUR=g.hp||60;
   if(keep){ sc.scrollTop=keep.t; sc.scrollLeft=keep.l; }
   else {
-    var boxH=sc.clientHeight-((sc.querySelector(".tg-sticky")||{}).offsetHeight||0);
-    var target = g.nowTop!=null ? g.nowTop-Math.max(HOUR, boxH*0.33) : 0;
+    /* start at the red line (just below the top); other days start at 08:00 */
+    var target = g.nowTop!=null ? g.nowTop-14 : 8*HOUR;
     var sticky=sc.querySelector(".tg-sticky");
     sc.scrollTop=Math.max(0,target);
     if(g.today>0){ var colW=(sc.querySelector(".tg-inner").scrollWidth-g.tcol)/(sc.querySelectorAll(".tg-col").length||1); sc.scrollLeft=Math.max(0,g.today*colW-colW*0.3); }
