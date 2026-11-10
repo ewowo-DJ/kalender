@@ -1,4 +1,4 @@
-"""Copy the TimeEdit timetable into the calendar's Firestore database.
+"""Copy the TimeEdit timetables and Google Calendars into the calendar's Firestore database.
 
 Runs daily from GitHub Actions.
 
@@ -6,6 +6,10 @@ The TimeEdit links are pasted in the app ("TimeEdit koppelen") and stored in
 Firestore at settings/timeedit. The repository secrets TIMEEDIT_URL and
 TIMEEDIT_URL_HELEN are only used as a fallback when no link is set in the app.
 FIREBASE_SERVICE_ACCOUNT (the service-account key JSON) is always required.
+
+Google Calendars are linked in the app too (settings/timeedit, fields gcal_ewoud /
+gcal_helen = the calendar's "secret address in iCal format"). Their events become
+items/gc-<person>-<id>, read-only in the app, from 30 days ago up to a year ahead.
   FIREBASE_SERVICE_ACCOUNT   the full JSON of a Firebase service-account key
 
 Each class becomes the document items/te-<id>, labelled for Ewoud, Helen, or both
@@ -20,6 +24,10 @@ import urllib.request
 from urllib.parse import urlparse
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
+
+import hashlib
+import subprocess
+from datetime import timedelta
 
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -42,6 +50,106 @@ def valid_link(url):
         return False
     host = (u.hostname or "").lower()
     return u.scheme == "https" and (host == "timeedit.net" or host.endswith(".timeedit.net")) and u.path.endswith(".ics")
+
+
+def valid_gcal(url):
+    """Only Google Calendar iCal links over https are fetched."""
+    try:
+        u = urlparse(url.strip())
+    except ValueError:
+        return False
+    return u.scheme == "https" and (u.hostname or "").lower() == "calendar.google.com" and "/calendar/ical/" in u.path and u.path.endswith(".ics")
+
+
+def expander():
+    """recurring-ical-events expands weekly/monthly Google events; installed on first use."""
+    try:
+        import recurring_ical_events
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "recurring-ical-events==2.2.3"])
+        import recurring_ical_events
+    return recurring_ical_events
+
+
+def parse_gcal(raw, who, today=None):
+    """Expand a Google Calendar feed into day items for one person."""
+    rie = expander()
+    cal = Calendar.from_ical(raw)
+    today = today or datetime.now(TZ).date()
+    start, end = today - timedelta(days=30), today + timedelta(days=366)
+    out = {}
+    for ev in rie.of(cal).between(start, end):
+        if str(ev.get("STATUS", "")).upper() == "CANCELLED":
+            continue
+        uid = str(ev.get("UID", ""))
+        dts = ev.decoded("DTSTART")
+        dte = ev.decoded("DTEND") if ev.get("DTEND") else None
+        title = str(ev.get("SUMMARY", "")).strip() or "(geen titel)"
+        loc = re.sub(r"\s+", " ", str(ev.get("LOCATION", ""))).strip()
+        desc = re.sub(r"\s+", " ", str(ev.get("DESCRIPTION", ""))).strip()[:300]
+        base = {"type": "event", "who": who, "title": title, "location": loc, "notes": desc, "source": "gcal"}
+        if isinstance(dts, datetime):
+            d, st = to_local(dts)
+            en = ""
+            if isinstance(dte, datetime):
+                ed, en = to_local(dte)
+                if ed != d:
+                    en = "23:59"   # runs past midnight: show until the end of the first day
+            days = [(d, st, en)]
+        else:
+            last = (dte - timedelta(days=1)) if isinstance(dte, date) and not isinstance(dte, datetime) else dts
+            days, cur = [], dts
+            while cur <= last and len(days) < 31:
+                days.append((cur.isoformat(), "", ""))
+                cur += timedelta(days=1)
+        for d, st, en in days:
+            key = hashlib.sha1(f"{uid}|{d}|{st}".encode()).hexdigest()[:16]
+            out[f"gc-{who}-{key}"] = dict(base, date=d, start=st, end=en)
+    return out
+
+
+def sync_gcal(db, col, in_app, today):
+    """Sync each person's Google Calendar. A broken feed never wipes anything."""
+    for who in ("ewoud", "helen"):
+        url = (in_app.get("gcal_" + who) or "").strip()
+        prefix = f"gc-{who}-"
+        existing = {d.id: d.to_dict() for d in col.where("source", "==", "gcal").stream() if d.id.startswith(prefix)}
+        if url and not valid_gcal(url):
+            print(f"Google Agenda {who}: not a Google Calendar iCal link, skipping it")
+            continue
+        feed = {}
+        if url:
+            try:
+                feed = parse_gcal(fetch(url), who)
+            except Exception as e:
+                print(f"Google Agenda {who}: could not read the feed ({e.__class__.__name__}); nothing changed")
+                continue
+        batch, n, added, updated, removed = db.batch(), 0, 0, 0, 0
+        for doc_id, body in feed.items():
+            old = existing.get(doc_id)
+            if old == body:
+                continue
+            batch.set(col.document(doc_id), body)
+            n += 1
+            if old is None:
+                added += 1
+            else:
+                updated += 1
+            if n >= 400:
+                batch.commit()
+                batch, n = db.batch(), 0
+        for doc_id, old in existing.items():
+            if doc_id not in feed and old.get("date", "") >= today:
+                batch.delete(col.document(doc_id))
+                n += 1
+                removed += 1
+                if n >= 400:
+                    batch.commit()
+                    batch, n = db.batch(), 0
+        if n:
+            batch.commit()
+        if url or removed:
+            print(f"Google Agenda {who}: {len(feed)} events, {added} added, {updated} updated, {removed} removed.")
 
 
 def clean_title(summary):
@@ -119,7 +227,9 @@ def main():
             continue
         feeds.append((who, url))
     if not feeds:
-        sys.exit("No TimeEdit link is set. Paste one in the app under 'TimeEdit koppelen'.")
+        print("No TimeEdit link is set; only Google Calendars are synced.")
+        sync_gcal(db, col, in_app, datetime.now(TZ).date().isoformat())
+        return
 
     # Fetch every feed first; if any fails, the script stops before changing anything.
     feed = {}
@@ -171,6 +281,7 @@ def main():
     if n:
         batch.commit()
     print(f"TimeEdit sync: {len(feed)} classes in feed, {added} added, {updated} updated, {removed} removed.")
+    sync_gcal(db, col, in_app, today)
 
 
 if __name__ == "__main__":

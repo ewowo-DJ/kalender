@@ -378,6 +378,11 @@ button{cursor:pointer}
 html.lockpage,html.lockpage body{height:100%;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;width:100%}
 html.lockpage #root{height:100%;overflow:hidden}
 .tg-scroll{overscroll-behavior:contain;touch-action:pan-x pan-y}
+.lk-sec{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:14px;padding:12px}
+.lk-sec input[type=url]{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;min-height:44px;font-size:14px}
+.lk-sec h4{margin:0;display:flex;align-items:center;gap:8px;font-size:15px}
+.lk-sec h4 svg{width:18px;height:18px;color:var(--accent)}
+.who-pick small{font-weight:500;opacity:.7;margin-left:4px}
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -563,7 +568,7 @@ function renderItem(i){
   }
   var mapUrl = i.location ? "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(i.location) : "";
   if(i.type==="event"){
-    var te=i.source==="timeedit";
+    var te=i.source==="timeedit"||i.source==="gcal";
     return '<div class="item'+(te?" te":"")+'"'+(te?'':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
       '<span class="bar'+dual(i).cls+'" style="background:'+evColor(i)+dual(i).css+'"></span>'+
       '<div class="time">'+(i.start?esc(i.start):"Hele dag")+(i.end?'<small>'+esc(i.end)+'</small>':'')+'</div>'+
@@ -571,7 +576,7 @@ function renderItem(i){
       (i.repeat==="weekly"?'<div class="meta">'+ICON.repeat+'<span>Elke '+DOW_LONG[parse(i.date).getDay()]+(i.until?' tot '+longDate(i.until):'')+'</span></div>':'')+
       (i.location?'<div class="meta">'+ICON.pin+'<a href="'+esc(mapUrl)+'" target="_blank" rel="noopener" data-stop="1">'+esc(i.location)+'</a></div>':'')+
       (i.notes?'<div class="meta">'+ICON.note+'<span>'+esc(i.notes)+'</span></div>':'')+
-      (te?'<div class="meta"><span class="src">Uit TimeEdit · dagelijks bijgewerkt</span></div>':(byLine(i)?'<div class="meta"><span class="src">'+esc(byLine(i))+'</span></div>':''))+
+      (te?'<div class="meta"><span class="src">'+(i.source==="gcal"?"Uit Google Agenda":"Uit TimeEdit")+' · dagelijks bijgewerkt</span></div>':(byLine(i)?'<div class="meta"><span class="src">'+esc(byLine(i))+'</span></div>':''))+
       '</div></div>';
   }
   return '<div class="item'+(i.done?" done":"")+'" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0">'+
@@ -654,7 +659,7 @@ document.addEventListener("change",function(e){
   if(e.target.id==="accent-pick"){ setAccent(e.target.value,true); render(); return; }
   if(e.target.classList&&e.target.classList.contains("ev-pick")&&ui.sheet){ readForm(); ui.sheet.color=e.target.value; render(); return; }
   if(e.target.id==="bday-pick"){ setBday(e.target.value,true); render(); return; }
-  if(e.target.classList&&e.target.classList.contains("te-pick")){ readTEForm(); setTEColor(e.target.dataset.w, e.target.value, true); render(); return; }
+  if(e.target.classList&&e.target.classList.contains("te-pick")){ readTEForm(); setTEColor(e.target.dataset.k, e.target.value, true); render(); return; }
   var t=e.target; if(!t.classList||!t.classList.contains("native")) return;
   var txt=document.getElementById(t.id.slice(0,-2)); if(txt&&t.value){ txt.value=fmtBE(t.value); txt.dispatchEvent(new Event("input",{bubbles:true})); }
 });
@@ -732,6 +737,7 @@ function teColor(w){ var c=(typeof TE!=="undefined"&&TE.colors)||{}; return c[w]
 function evColor2(i){ if(i.source!=="timeedit"||i.who!=="both") return ""; var ce=teColor("ewoud"), ch=teColor("helen"); return ce===ch?"":ch; }
 function dual(i){ var c2=evColor2(i); return c2 ? {cls:" dual", css:";--c2:"+c2} : {cls:"", css:""}; }
 function evColor(i){
+  if(i.source==="gcal") return gcColor(i.who);
   if(i.source==="timeedit"){
     var ce=teColor("ewoud"), ch=teColor("helen");
     return i.who==="helen" ? ch : ce;
@@ -789,7 +795,7 @@ function renderTimeGrid(dates){
       var list=its.filter(function(i){ return i.type==="task" || mins(i.start)==null; });
       if(list.length) hasAll=true;
       return '<div class="tg-allcell'+(dates[k]===TODAY?" today":"")+'">'+list.map(function(i){
-        var te=i.source==="timeedit"||i.source==="fixed", task=i.type==="task";
+        var te=i.source==="timeedit"||i.source==="gcal"||i.source==="fixed", task=i.type==="task";
         return '<div class="chip'+(task?" task":"")+(i.done?" done":"")+'" style="--c:'+evColor(i)+'"'+(te?'':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
           (task?'<button class="mini-check" role="checkbox" aria-checked="'+(!!i.done)+'" aria-label="Klaar" data-act="toggle" data-id="'+i.id+'" data-date="'+i.date+'">'+ICON.tick+'</button>':'')+
           (yearly(i)?'<i class="ck">'+(i.type==="anniversary"?ICON.heart:ICON.cake)+'</i>':'')+'<span>'+(i.start&&task?esc(i.start)+' ':'')+esc(yearly(i)?bdayTitle(i):i.title)+'</span>'+(i.who&&i.who!=="both"?'<em class="dot-'+i.who+'" title="'+PEOPLE[i.who].name+'"></em>':'')+'</div>';
@@ -807,7 +813,7 @@ function renderTimeGrid(dates){
     perDay.map(function(its,k){
       var evs=dayEvs[k];
       var blocks=evs.map(function(ev){
-        var i=ev.i, te=i.source==="timeedit", top=(ev.s-lo)/60*HP, hgt=Math.max((ev.e-ev.s)/60*HP-2, compact?14:22);
+        var i=ev.i, te=i.source==="timeedit"||i.source==="gcal", top=(ev.s-lo)/60*HP, hgt=Math.max((ev.e-ev.s)/60*HP-2, compact?14:22);
         var w=100/ev.ncol, left=ev.col*w, short=hgt<52;
         var du=dual(i);
         return '<div class="blk'+(te?" te":"")+du.cls+(short?" short":"")+(ev.ncol>1&&dates.length>1?" narrow":"")+'" style="--c:'+evColor(i)+du.css+';top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 2px);width:calc('+w+'% - 4px)"'+
@@ -883,36 +889,49 @@ function upcomingBdays(){
     }).join("")+'</div></div>';
 }
 /* ---------- TimeEdit koppelen: links stored in Firestore settings/timeedit ---------- */
-var TE={state:"loading", ewoud:"", helen:"", updated:{}, colors:{}}, stopTE=null;
+var TE={state:"loading", ewoud:"", helen:"", gcal_ewoud:"", gcal_helen:"", updated:{}, colors:{}}, stopTE=null;
+function validGC(u){ return /^https:\/\/calendar\.google\.com\/calendar\/ical\/\S+\.ics$/i.test(String(u||"").trim()); }
+function gcColor(w){ var c=(TE.colors||{})["gcal_"+w]; return c || "#5b6fd8"; }
 function validTE(u){ return /^https:\/\/[a-z0-9.\-]*timeedit\.net\/\S+\.ics(\?\S*)?$/i.test(String(u||"").trim()); }
 function startTE(){
   if(!window.firebase) return;
   stopTE=firebase.firestore().doc("settings/timeedit").onSnapshot(function(d){
-    var v=d.exists?d.data():{}; TE.ewoud=v.ewoud||""; TE.helen=v.helen||""; TE.updated=v.updated||{}; TE.colors=v.colors||{}; TE.state="ready"; applyPersonColors();
+    var v=d.exists?d.data():{}; TE.ewoud=v.ewoud||""; TE.helen=v.helen||""; TE.gcal_ewoud=v.gcal_ewoud||""; TE.gcal_helen=v.gcal_helen||""; TE.updated=v.updated||{}; TE.colors=v.colors||{}; TE.state="ready"; applyPersonColors();
     if(ui.ssheet) return; render();
   }, function(err){ TE.state = err&&err.code==="permission-denied" ? "denied" : "error"; render(); });
 }
 function stopTimeEdit(){ if(stopTE){ stopTE(); stopTE=null; } TE.state="loading"; }
 function maskTE(u){ if(!u) return ""; var m=u.match(/^https:\/\/([^\/]+)\/(.*)$/); return m ? m[1]+"/…"+u.slice(-14) : u.slice(0,24)+"…"; }
+function linkBlock(key, kind, w){
+  var cur=TE[key], draft=ui.ssheet[key], name=PEOPLE[w].name;
+  var ph = kind==="te" ? "https://cloud.timeedit.net/…/….ics" : "https://calendar.google.com/calendar/ical/…/basic.ics";
+  var ckey = kind==="te" ? w : "gcal_"+w, col = kind==="te" ? teColor(w) : gcColor(w);
+  return (cur&&draft==null
+      ? '<div class="te-linked"><span class="ok">Gekoppeld</span><code>'+esc(maskTE(cur))+'</code>'+(TE.updated[key]?'<small>door '+esc(TE.updated[key])+'</small>':'')+
+        '<div class="te-actions"><button type="button" class="pill-btn" data-act="te-edit" data-k="'+key+'">Andere link</button><button type="button" class="pill-btn danger" data-act="te-remove" data-k="'+key+'">Ontkoppelen</button></div></div>'
+      : '<input id="lk-'+key+'" type="url" inputmode="url" autocomplete="off" placeholder="'+ph+'" value="'+esc(draft||"")+'" aria-label="'+(kind==="te"?"TimeEdit":"Google Agenda")+'-link van '+name+'">')+
+    '<div class="te-color"><span class="lbl">'+(kind==="te"?"Kleur van de lessen":"Kleur van de Google-afspraken")+'</span><div class="swatch-row">'+
+      TE_PRESETS.map(function(c){ return '<button type="button" class="sw" style="background:'+c+'" data-act="te-color" data-k="'+ckey+'" data-c="'+c+'" aria-label="'+c+'" aria-pressed="'+(col.toLowerCase()===c)+'"></button>'; }).join("")+
+    '</div><div class="own"><label class="own-pick" style="--pick:'+col+'"><input type="color" class="te-pick" data-k="'+ckey+'" value="'+col+'" aria-label="Eigen kleur"><span>Eigen kleur</span></label><span class="te-prev" style="--c:'+col+'">Voorbeeld</span></div></div>';
+}
 function renderTESheet(){
-  var row=function(w){
-    var cur=TE[w], draft=ui.ssheet[w];
-    return '<div class="field te-row"><label for="te-'+w+'">'+PEOPLE[w].name+'</label>'+
-      (cur&&draft==null
-        ? '<div class="te-linked"><span class="ok">Gekoppeld</span><code>'+esc(maskTE(cur))+'</code>'+(TE.updated[w]?'<small>door '+esc(TE.updated[w])+'</small>':'')+
-          '<div class="te-actions"><button type="button" class="pill-btn" data-act="te-edit" data-w="'+w+'">Andere link</button><button type="button" class="pill-btn danger" data-act="te-remove" data-w="'+w+'">Ontkoppelen</button></div></div>'
-        : '<input id="te-'+w+'" type="url" inputmode="url" autocomplete="off" placeholder="https://cloud.timeedit.net/…/….ics" value="'+esc(draft||"")+'">')+
-      '<div class="te-color"><span class="lbl">Kleur van de lessen</span><div class="swatch-row">'+
-        TE_PRESETS.map(function(c){ return '<button type="button" class="sw" style="background:'+c+'" data-act="te-color" data-w="'+w+'" data-c="'+c+'" aria-label="Lessen van '+PEOPLE[w].name+' in '+c+'" aria-pressed="'+(teColor(w).toLowerCase()===c)+'"></button>'; }).join("")+
-      '</div><div class="own"><label class="own-pick" style="--pick:'+teColor(w)+'"><input type="color" class="te-pick" data-w="'+w+'" value="'+teColor(w)+'" aria-label="Eigen kleur voor de lessen van '+PEOPLE[w].name+'"><span>Eigen kleur</span></label><span class="te-prev" style="--c:'+teColor(w)+'">Voorbeeld</span></div></div>'+
-    '</div>';
-  };
+  var w=ui.ssheet.tab||(userName.toLowerCase()==="helen"?"helen":"ewoud");
+  var n=function(p){ return (TE[p]?1:0)+(TE["gcal_"+p]?1:0); };
   return '<div class="scrim" data-act="scrim"><form class="sheet" id="tesheet" novalidate>'+
-    '<div class="sheet-h"><h3>TimeEdit koppelen</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
+    '<div class="sheet-h"><h3>Koppelingen</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
+    '<div class="tabs who-pick" role="tablist" aria-label="Persoon">'+["ewoud","helen"].map(function(p){
+      return '<button type="button" role="tab" class="wp-'+p+'" data-act="lk-tab" data-w="'+p+'" aria-selected="'+(w===p)+'" aria-pressed="'+(w===p)+'">'+PEOPLE[p].name+' <small>'+n(p)+'/2</small></button>'; }).join("")+'</div>'+
     (TE.state==="denied"?'<p class="err">De app mag de instellingen nog niet lezen. De Firebase-regels moeten nog bijgewerkt worden.</p>':'')+
-    '<ol class="te-help"><li>Open je rooster in <b>TimeEdit</b> en klik op <b>Abonneren</b>.</li><li>Kies een lange periode, bv. tot het einde van het academiejaar.</li><li>Kopieer de link (eindigt op <b>.ics</b>) en plak hem hieronder.</li></ol>'+
-    row("ewoud")+row("helen")+
-    '<p class="hint">Je lessen worden elke ochtend automatisch bijgewerkt. Na een nieuwe koppeling zie je ze dus ten laatste morgen. Wie samen les heeft, krijgt het label "Beiden".</p>'+
+    '<section class="lk-sec"><h4>'+ICON.cal+'TimeEdit</h4>'+
+      '<ol class="te-help"><li>Open je rooster in <b>TimeEdit</b> en klik op <b>Abonneren</b>.</li><li>Kies een lange periode, bv. tot het einde van het academiejaar.</li><li>Kopieer de link (eindigt op <b>.ics</b>) en plak hem hieronder.</li></ol>'+
+      linkBlock(w,"te",w)+
+    '</section>'+
+    '<section class="lk-sec"><h4>'+ICON.cal+'Google Agenda</h4>'+
+      '<ol class="te-help"><li>Open <b>Google Agenda</b> op een computer en ga naar <b>Instellingen</b> (tandwiel).</li><li>Klik links onder <b>Instellingen voor mijn agenda\'s</b> op je agenda.</li><li>Scroll naar <b>Agenda integreren</b> en kopieer het <b>Geheime adres in iCal-indeling</b>.</li></ol>'+
+      linkBlock("gcal_"+w,"gc",w)+
+      '<p class="hint">De link is privé: alleen jij en '+(w==="ewoud"?"Helen":"Ewoud")+' kunnen hem in de app zien. Afspraken uit Google pas je aan in Google Agenda zelf.</p>'+
+    '</section>'+
+    '<p class="hint">Alles wordt elke ochtend automatisch bijgewerkt. Na een nieuwe koppeling zie je het dus ten laatste morgen.</p>'+
     '<p class="err" role="alert">'+esc(ui.err)+'</p>'+
     '<div class="actions"><button type="submit" class="primary">Opslaan</button></div>'+
   '</form></div>';
@@ -932,23 +951,24 @@ function setTEColor(w, hex, save){
   TE.colors=Object.assign({}, TE.colors); TE.colors[w]=hex; applyPersonColors();
   if(save && window.firebase){ var c={}; c[w]=hex; firebase.firestore().doc("settings/timeedit").set({colors:c},{merge:true}).catch(function(){ statusText="De kleur kon niet bewaard worden. Zijn de Firebase-regels bijgewerkt?"; }); }
 }
-function readTEForm(){ ["ewoud","helen"].forEach(function(w){ var e=document.getElementById("te-"+w); if(e) ui.ssheet[w]=e.value.trim(); }); }
+var LINK_KEYS=["ewoud","helen","gcal_ewoud","gcal_helen"];
+function readTEForm(){ LINK_KEYS.forEach(function(k){ var e=document.getElementById("lk-"+k); if(e) ui.ssheet[k]=e.value.trim(); }); }
 function saveTE(){
   readTEForm();
   var upd={}, bad=[];
-  ["ewoud","helen"].forEach(function(w){
-    var v=ui.ssheet[w];
-    if(v==null) return;
-    if(v==="" ){ if(ui.ssheet["rm_"+w]) upd[w]=""; return; }
-    if(!validTE(v)) bad.push(PEOPLE[w].name); else upd[w]=v;
+  LINK_KEYS.forEach(function(k){
+    if(ui.ssheet["rm_"+k]){ upd[k]=""; }
+    var v=ui.ssheet[k];
+    if(v==null||v==="") return;
+    var gc=k.indexOf("gcal_")===0, who=PEOPLE[gc?k.slice(5):k].name;
+    if(gc ? !validGC(v) : !validTE(v)) bad.push((gc?"de Google Agenda":"de TimeEdit-link")+" van "+who); else upd[k]=v;
   });
-  ["ewoud","helen"].forEach(function(w){ if(ui.ssheet["rm_"+w]) upd[w]=""; });
-  if(bad.length){ ui.err="De link van "+bad.join(" en ")+" lijkt geen TimeEdit-abonnementslink. Hij moet beginnen met https:// en eindigen op .ics."; render(); return; }
+  if(bad.length){ ui.err="Controleer "+bad.join(" en ")+". TimeEdit-links eindigen op .ics en komen van timeedit.net; Google-links beginnen met https://calendar.google.com/calendar/ical/ en eindigen op .ics."; render(); return; }
   if(!Object.keys(upd).length){ ui.ssheet=null; render(); return; }
   var body={updated:{}};
-  Object.keys(upd).forEach(function(w){ body[w]=upd[w]; body.updated[w]=userName||userEmail; });
+  Object.keys(upd).forEach(function(k){ body[k]=upd[k]; body.updated[k]=userName||userEmail; });
   firebase.firestore().doc("settings/timeedit").set(body,{merge:true}).then(function(){
-    ui.ssheet=null; statusText="TimeEdit-koppeling opgeslagen. Je lessen verschijnen bij de volgende update (elke ochtend)."; render();
+    ui.ssheet=null; statusText="Koppeling opgeslagen. Ze verschijnt bij de volgende update (elke ochtend)."; render();
   }).catch(function(err){
     ui.err = err&&err.code==="permission-denied" ? "Opslaan mag nog niet: de Firebase-regels moeten bijgewerkt worden." : "Opslaan is niet gelukt. Controleer je verbinding."; render();
   });
@@ -1013,7 +1033,7 @@ function setBday(hex, save){
 try{ var lb=localStorage.getItem("cal-bday-last"); if(lb) setBday(lb,false); }catch(e){}
 function renderMenu(){
   if(!ui.menu) return "";
-  var dark=curTheme()==="dark", linked=["ewoud","helen"].filter(function(w){return TE[w];}).length;
+  var dark=curTheme()==="dark", linked=LINK_KEYS.filter(function(k){return TE[k];}).length;
   var cur=(userAccent||PRESETS[0]).toLowerCase();
   return '<div class="menu-scrim" data-act="menu-close"></div><div class="menu" role="dialog" aria-label="Instellingen">'+
     '<div class="menu-sec"><h4>Account</h4>'+
@@ -1035,7 +1055,7 @@ function renderMenu(){
         '<span class="bd-prev">'+ICON.cake+' Verjaardag</span>'+(userBday?'<button class="link" data-act="bday-reset">Standaard</button>':'')+'</div>'+
     '</div>'+
     '<div class="menu-sec"><h4>Koppelingen</h4>'+
-      '<button class="menu-row" data-act="te-open">'+ICON.link+'<span>TimeEdit koppelen</span><em>'+linked+'/2</em></button>'+
+      '<button class="menu-row" data-act="te-open">'+ICON.link+'<span>Koppelingen</span><em>'+linked+'/4</em></button>'+
     '</div>'+
   '</div>';
 }
@@ -1352,10 +1372,11 @@ document.addEventListener("click",function(e){
         else { c.done=!c.done; it.done=c.done; }
         write(c.id, clean(c)); render(); } break;
     case "close": ui.sheet=null; ui.msheet=null; ui.ssheet=null; render(); break;
-    case "te-color": readTEForm(); setTEColor(t.dataset.w, t.dataset.c, true); render(); break;
+    case "te-color": readTEForm(); setTEColor(t.dataset.k, t.dataset.c, true); render(); break;
+    case "lk-tab": readTEForm(); ui.ssheet.tab=t.dataset.w; ui.err=""; render(); break;
     case "te-open": ui.menu=false; ui.ssheet={}; ui.err=""; render(); break;
-    case "te-edit": readTEForm(); ui.ssheet[t.dataset.w]=""; render(); var f=document.getElementById("te-"+t.dataset.w); if(f) f.focus(); break;
-    case "te-remove": readTEForm(); ui.ssheet[t.dataset.w]=""; ui.ssheet["rm_"+t.dataset.w]=true; render(); break;
+    case "te-edit": readTEForm(); ui.ssheet[t.dataset.k]=""; render(); var f=document.getElementById("lk-"+t.dataset.k); if(f) f.focus(); break;
+    case "te-remove": readTEForm(); ui.ssheet[t.dataset.k]=""; ui.ssheet["rm_"+t.dataset.k]=true; render(); break;
     case "tab": ui.tab=t.dataset.tab; ui.sheet=null; ui.msheet=null; saveUI(); render(); window.scrollTo(0,0); break;
     case "addex": if(canWrite) openEx("expense"); break;
     case "settle": if(canWrite) openEx("settle"); break;
