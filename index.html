@@ -1442,8 +1442,7 @@ function studyPlan(){
       var review=exams.filter(function(e){ return addDays(e.date,-1)===d && e.start<=d; });
       var demands=[], mix=p.mix==="mix";
       if(review.length){
-        var free0=freeOn(d,p,me), tot=free0.reduce(function(a,f){ return a+f[1]-f[0]; },0);
-        review.forEach(function(e){ demands.push({ex:e, mins:Math.floor(tot/review.length/15)*15, review:true}); });
+        review.forEach(function(e){ demands.push({ex:e, mins:Math.round(e.hours*60), review:true}); });
         mix=review.length>1;
       } else {
         var act=exams.filter(function(e){ return e.start<=d && d<addDays(e.date,-1); });
@@ -1462,7 +1461,7 @@ function studyPlan(){
       demands.forEach(function(dm,k){
         if(!dm.review) days[dm.ex.id]++;
         if(d>=TODAY){
-          if(dm.review && res.got[k]<60){ (shortBy[dm.ex.id]=shortBy[dm.ex.id]||{ex:dm.ex,m:0,n:0,rev:true}).rev=true; }
+          if(dm.review && res.got[k]<dm.mins){ (shortBy[dm.ex.id]=shortBy[dm.ex.id]||{ex:dm.ex,m:0,n:0,rev:true}).rev=true; }
           else if(!dm.review && res.got[k]<dm.mins){ var o=shortBy[dm.ex.id]=shortBy[dm.ex.id]||{ex:dm.ex,m:0,n:0}; o.m+=dm.mins-res.got[k]; o.n++; }
         }
       });
@@ -1470,7 +1469,7 @@ function studyPlan(){
     Object.keys(shortBy).forEach(function(id){
       var o=shortBy[id];
       if(o.m>0) warn.push(o.ex.subject+": "+fmtMins(o.m)+" te weinig tijd, verspreid over "+o.n+" dag"+(o.n>1?"en":"")+".");
-      if(o.rev) warn.push(o.ex.subject+": op de herhaaldag ("+nice(addDays(o.ex.date,-1))+") is er (bijna) geen vrije tijd.");
+      if(o.rev) warn.push(o.ex.subject+": op de herhaaldag ("+nice(addDays(o.ex.date,-1))+") is er niet genoeg vrije tijd om "+fmtMins(o.ex.hours*60)+" te herhalen.");
     });
     exams.forEach(function(e){
       if(e.date<TODAY || p.mix==="mix") return;
@@ -1569,7 +1568,7 @@ function renderExamSheet(){
       '<div class="field"><label for="e-time">Uur (optioneel)</label><input id="e-time" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(it.time)+'"></div></div>'+
     dateField("e-start","Begin met studeren op",it.start,it._startRaw)+
     '<div class="field"><label for="e-hours">Uren per dag voor dit vak</label><input id="e-hours" inputmode="decimal" value="'+esc(it.hoursStr)+'" placeholder="bv. 3 of 1,5" autocomplete="off"></div>'+
-    '<p class="hint">De dag voor het examen is volledig voor herhaling. Na het examen komt het vak bij Voltooid.</p>'+
+    '<p class="hint">De dag voor het examen herhaal je dit vak, met hetzelfde aantal uur. Na het examen komt het vak bij Voltooid.</p>'+
     '<p class="err" role="alert">'+esc(ui.err)+'</p>'+
     '<div class="actions">'+(it.id?'<button type="button" class="del'+(ui.armed?" armed":"")+'" data-act="delexam">'+(ui.armed?"Tik nogmaals om te verwijderen":"Verwijderen")+'</button>':'')+
     '<button type="submit" class="primary">'+(it.id?"Wijzigingen opslaan":"Examen toevoegen")+'</button></div>'+
