@@ -424,34 +424,22 @@ html.lockpage #root{height:100%;overflow:hidden}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}}
 .appnav .sh{display:none}
 @media (max-width:899px){ .appnav .lg{display:none} .appnav .sh{display:inline} .filter .lg{display:none} .filter button{padding:4px 9px} .filter{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none} .filter::-webkit-scrollbar{display:none} }
-.filter .st-toggle{margin-left:0}
-.exams-bar{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:color-mix(in srgb,#c46a10 9%,var(--surface));border:1px solid color-mix(in srgb,#c46a10 30%,var(--line));border-radius:12px;padding:10px 12px;font-size:14px;color:var(--ink)}
-.exams-bar .cake{background:color-mix(in srgb,#c46a10 18%,var(--surface));color:#c46a10}
-.exams-bar>div{display:flex;flex-direction:column;gap:2px;min-width:0}
-.exams-bar b{color:#c46a10;font-size:14px}
-.exams-bar span{color:var(--muted);font-size:13px}
-.st-count{border-top:4px solid var(--c)}
-.st-count .bal-n{color:var(--c)}
 .bal-l.sm{font-size:13px}
-.st-warn{display:flex;flex-direction:column;gap:4px;background:color-mix(in srgb,var(--danger) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--danger) 35%,var(--line));border-radius:12px;padding:10px 12px;font-size:14px}
-.st-warn b{color:var(--danger)}
-.st-warn .sm{color:var(--muted);font-size:13px}
-.st-set{align-items:center;border:1px solid var(--line);color:var(--ink)}
-.st-set>svg{width:22px;height:22px;color:var(--muted);flex:none}
 .st-n{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
-.st-tag{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,var(--surface))}
-.st-exam{background:color-mix(in srgb,var(--c) 10%,var(--surface));border-color:color-mix(in srgb,var(--c) 35%,var(--line))}
-.st-done-h{margin-top:12px}
-.st-done{opacity:.75}
-.st-ok{flex:none;width:26px;height:26px;border-radius:8px;background:var(--ew-soft);color:var(--ew);display:grid;place-items:center}
-.st-ok svg{width:15px;height:15px}
-.st-days{display:flex;flex-direction:column;gap:6px}
-.st-day{display:grid;grid-template-columns:110px 1fr auto 1fr;gap:8px;align-items:center}
-.st-day input{min-height:40px;padding:8px 10px;text-align:center}
-.st-day span{color:var(--muted);font-size:13px}
-.st-day em{grid-column:2/5;color:var(--muted);font-size:13px;font-style:normal}
-.st-dtog{height:40px;border-radius:10px;border:1px solid var(--line);background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:14px}
-.st-dtog[aria-pressed="false"]{background:transparent;color:var(--muted);text-decoration:line-through}
+.tm-run{border-top:4px solid var(--c)}
+.tm-name{font:700 20px/1.2 var(--display);color:var(--c)}
+.tm-clock{font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.tm-run .tm-clock{color:var(--ink)}
+.tm-stop{display:flex;align-items:center;gap:8px;height:46px;padding:0 22px;border-radius:23px;border:0;background:var(--danger);color:#fff;font-weight:700;font-size:16px;margin-top:4px}
+.tm-stop svg{width:18px;height:18px}
+.tm-subj{align-items:center}
+.tm-subj .body{cursor:pointer}
+.tm-subj.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 8%,var(--surface))}
+.tm-play{flex:none;width:48px;height:48px;border-radius:50%;border:0;background:var(--c);color:#fff;display:grid;place-items:center;padding:0}
+.tm-play svg{width:20px;height:20px}
+.tm-play.on{background:var(--danger)}
+.tm-sess{margin:0;display:flex;flex-direction:column;gap:4px}
+.tm-sess span{color:var(--muted);font-size:14px}
 </style>
 </head>
 <body>
@@ -482,10 +470,10 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function nice(s){var d=parse(s);return DOW_LONG[d.getDay()]+" "+d.getDate()+" "+MONTHS[d.getMonth()];}
 
 var TODAY = iso(new Date());
-var ui = {tab:"cal", study:true, msheet:null, sel:TODAY, view:"month", past:false, who:"all", classes:true, sheet:null, err:"", armed:false};
-try { var u = JSON.parse(localStorage.getItem("cal-ui")||"null"); if(u){ui.view=({day:1,week:1,month:1})[u.view]?u.view:"month"; ui.who=u.who||"all"; ui.classes=u.classes!==false; ui.tab=({money:1,study:1})[u.tab]?u.tab:"cal"; ui.study=u.study!==false;} } catch(e){}
+var ui = {tab:"cal", msheet:null, sel:TODAY, view:"month", past:false, who:"all", classes:true, sheet:null, err:"", armed:false};
+try { var u = JSON.parse(localStorage.getItem("cal-ui")||"null"); if(u){ui.view=({day:1,week:1,month:1})[u.view]?u.view:"month"; ui.who=u.who||"all"; ui.classes=u.classes!==false; ui.tab=({money:1,study:1})[u.tab]?u.tab:"cal";} } catch(e){}
 ui.month = ui.sel.slice(0,7);
-function saveUI(){try{localStorage.setItem("cal-ui",JSON.stringify({tab:ui.tab,view:ui.view,who:ui.who,classes:ui.classes,study:ui.study}));}catch(e){}}
+function saveUI(){try{localStorage.setItem("cal-ui",JSON.stringify({tab:ui.tab,view:ui.view,who:ui.who,classes:ui.classes}));}catch(e){}}
 function visible(i){ if(!ui.classes && i.source==="timeedit") return false; return ui.who==="all" || i.who===ui.who || i.who==="both"; }
 function byLine(o){
   var a=o.addedBy, e=o.editedBy, parts=[];
@@ -512,6 +500,9 @@ var ICON = {
   close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
   euro:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 6.5A7 7 0 1 0 17.5 17.5"/><path d="M4 10h9M4 14h9"/></svg>',
+  timer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V10M9.5 2.5h5M19 6.5l-1.5 1.5"/></svg>',
+  play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z"/></svg>',
+  stop:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>',
   book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M8.5 7.5h7"/></svg>',
   note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h9"/></svg>'
 };
@@ -547,7 +538,6 @@ function repCopy(i, date){
 function itemsOn(date){
   return allItems().filter(function(i){ return visible(i) && (yearly(i) ? bdayOn(i,date) : i.repeat==="weekly" ? repOn(i,date) : i.date===date); })
     .map(function(i){ return yearly(i) ? bdayCopy(i,date) : i.repeat==="weekly" ? repCopy(i,date) : i; })
-    .concat(typeof studyItemsOn==="function" ? studyItemsOn(date) : [])
     .sort(function(a,b){
     if(yearly(a)!==yearly(b)) return yearly(a)?-1:1;
     if(a.type==="anniversary"||b.type==="anniversary") return a.type==="anniversary"?-1:1;
@@ -600,15 +590,15 @@ function renderItem(i){
   }
   var mapUrl = i.location ? "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(i.location) : "";
   if(i.type==="event"){
-    var te=i.source==="timeedit"||i.source==="gcal"||isStudy(i);
-    return '<div class="item'+(te?" te":"")+'"'+(isStudy(i)?' data-act="gostudy" role="button" tabindex="0"':te?'':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
+    var te=i.source==="timeedit"||i.source==="gcal";
+    return '<div class="item'+(te?" te":"")+'"'+(te?'':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
       '<span class="bar'+dual(i).cls+'" style="background:'+evColor(i)+dual(i).css+'"></span>'+
       '<div class="time">'+(i.start?esc(i.start):"Hele dag")+(i.end?'<small>'+esc(i.end)+'</small>':'')+'</div>'+
       '<div class="body"><div class="title-row"><div class="title">'+esc(i.title)+'</div>'+chip(i.who)+'</div>'+
       (i.repeat==="weekly"?'<div class="meta">'+ICON.repeat+'<span>Elke '+DOW_LONG[parse(i.date).getDay()]+(i.until?' tot '+longDate(i.until):'')+'</span></div>':'')+
       (i.location?'<div class="meta">'+ICON.pin+'<a href="'+esc(mapUrl)+'" target="_blank" rel="noopener" data-stop="1">'+esc(i.location)+'</a></div>':'')+
       (i.notes?'<div class="meta">'+ICON.note+'<span>'+esc(i.notes)+'</span></div>':'')+
-      (isStudy(i)?'<div class="meta"><span class="src">Uit je studieplanning</span></div>':te?'<div class="meta"><span class="src">'+(i.source==="gcal"?"Uit Google Agenda":"Uit TimeEdit")+' · dagelijks bijgewerkt</span></div>':(byLine(i)?'<div class="meta"><span class="src">'+esc(byLine(i))+'</span></div>':''))+
+      (te?'<div class="meta"><span class="src">'+(i.source==="gcal"?"Uit Google Agenda":"Uit TimeEdit")+' · dagelijks bijgewerkt</span></div>':(byLine(i)?'<div class="meta"><span class="src">'+esc(byLine(i))+'</span></div>':''))+
       '</div></div>';
   }
   return '<div class="item'+(i.done?" done":"")+'" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0">'+
@@ -769,7 +759,6 @@ function teColor(w){ var c=(typeof TE!=="undefined"&&TE.colors)||{}; return c[w]
 function evColor2(i){ if(i.source!=="timeedit"||i.who!=="both") return ""; var ce=teColor("ewoud"), ch=teColor("helen"); return ce===ch?"":ch; }
 function dual(i){ var c2=evColor2(i); return c2 ? {cls:" dual", css:";--c2:"+c2} : {cls:"", css:""}; }
 function evColor(i){
-  if(isStudy(i)) return /^#[0-9a-f]{6}$/i.test(i.color||"") ? i.color : "#c46a10";
   if(i.source==="gcal") return gcColor(i.who);
   if(i.source==="timeedit"){
     var ce=teColor("ewoud"), ch=teColor("helen");
@@ -828,8 +817,8 @@ function renderTimeGrid(dates){
       var list=its.filter(function(i){ return i.type==="task" || mins(i.start)==null; });
       if(list.length) hasAll=true;
       return '<div class="tg-allcell'+(dates[k]===TODAY?" today":"")+'">'+list.map(function(i){
-        var te=i.source==="timeedit"||i.source==="gcal"||i.source==="fixed"||isStudy(i), task=i.type==="task";
-        return '<div class="chip'+(task?" task":"")+(i.done?" done":"")+'" style="--c:'+evColor(i)+'"'+(isStudy(i)?' data-act="gostudy" role="button" tabindex="0"':te?'':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
+        var te=i.source==="timeedit"||i.source==="gcal"||i.source==="fixed", task=i.type==="task";
+        return '<div class="chip'+(task?" task":"")+(i.done?" done":"")+'" style="--c:'+evColor(i)+'"'+(te?'':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
           (task?'<button class="mini-check" role="checkbox" aria-checked="'+(!!i.done)+'" aria-label="Klaar" data-act="toggle" data-id="'+i.id+'" data-date="'+i.date+'">'+ICON.tick+'</button>':'')+
           (yearly(i)?'<i class="ck">'+(i.type==="anniversary"?ICON.heart:ICON.cake)+'</i>':'')+'<span>'+(i.start&&task?esc(i.start)+' ':'')+esc(yearly(i)?bdayTitle(i):i.title)+'</span>'+(i.who&&i.who!=="both"?'<em class="dot-'+i.who+'" title="'+PEOPLE[i.who].name+'"></em>':'')+'</div>';
       }).join("")+'</div>';
@@ -846,11 +835,11 @@ function renderTimeGrid(dates){
     perDay.map(function(its,k){
       var evs=dayEvs[k];
       var blocks=evs.map(function(ev){
-        var i=ev.i, te=i.source==="timeedit"||i.source==="gcal"||isStudy(i), top=(ev.s-lo)/60*HP, hgt=Math.max((ev.e-ev.s)/60*HP-2, compact?14:22);
+        var i=ev.i, te=i.source==="timeedit"||i.source==="gcal", top=(ev.s-lo)/60*HP, hgt=Math.max((ev.e-ev.s)/60*HP-2, compact?14:22);
         var w=100/ev.ncol, left=ev.col*w, short=hgt<52;
         var du=dual(i);
         return '<div class="blk'+(te?" te":"")+du.cls+(short?" short":"")+(ev.ncol>1&&dates.length>1?" narrow":"")+'" style="--c:'+evColor(i)+du.css+';top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 2px);width:calc('+w+'% - 4px)"'+
-          (isStudy(i)?' title="'+esc(i.title)+'" data-act="gostudy" role="button" tabindex="0"':te?' title="'+esc(i.title+(i.location?" · "+i.location:""))+'"':' title="'+esc(byLine(i))+'" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
+          (te?' title="'+esc(i.title+(i.location?" · "+i.location:""))+'"':' title="'+esc(byLine(i))+'" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
           '<div class="blk-c"><div class="blk-t"><span>'+esc(i.start)+(i.end?'<span class="end">–'+esc(i.end)+'</span>':'')+'</span>'+(i.who?'<em class="who who-'+i.who+'">'+PEOPLE[i.who].name+'</em>':'')+'</div>'+
           '<div class="blk-n" lang="nl">'+esc(i.title)+'</div>'+
           (i.location&&!short?'<div class="blk-l" lang="nl">'+esc(i.location)+'</div>':'')+
@@ -878,7 +867,7 @@ function fitGrid(){
   var st=sc.querySelector(".tg-sticky"); if(st) sc.style.setProperty("--stk", st.offsetHeight+"px");
   return false;
 }
-var fitTimer=null; window.addEventListener("resize",function(){ clearTimeout(fitTimer); fitTimer=setTimeout(function(){ if(authState==="in"&&!ui.sheet&&!ui.msheet&&!ui.ssheet&&!ui.xsheet&&!ui.psheet) render(); },150); });
+var fitTimer=null; window.addEventListener("resize",function(){ clearTimeout(fitTimer); fitTimer=setTimeout(function(){ if(authState==="in"&&!ui.sheet&&!ui.msheet&&!ui.ssheet&&!ui.tsheet) render(); },150); });
 function placeGrid(keep){
   var sc0=document.getElementById("tgscroll");
   if(sc0&&keep){ sc0.scrollTop=keep.t; sc0.scrollLeft=keep.l; }   /* restore first, so a re-fit keeps the position */
@@ -903,7 +892,7 @@ function placeGrid(keep){
 }
 /* Move the red line every minute (and roll over to a new day at midnight). */
 setInterval(function(){
-  if(authState!=="in" || ui.sheet || ui.msheet || ui.ssheet || ui.xsheet || ui.psheet || ui.menu) return;
+  if(authState!=="in" || ui.sheet || ui.msheet || ui.ssheet || ui.tsheet || ui.menu) return;
   var t=iso(new Date()); if(t!==TODAY){ if(ui.sel===TODAY) ui.sel=t; TODAY=t; ui.month=ui.sel.slice(0,7); }
   if(ui.tab==="cal" && /^(day|week)$/.test(ui.view)) render();
 }, 60000);
@@ -1103,7 +1092,7 @@ function appNav(){
   return '<nav class="appnav" aria-label="Onderdelen">'+
     '<button data-act="tab" data-tab="cal" aria-pressed="'+(ui.tab==="cal")+'">'+ICON.cal+'Kalender</button>'+
     '<button data-act="tab" data-tab="money" aria-pressed="'+(ui.tab==="money")+'">'+ICON.euro+'Uitgaven</button>'+
-    '<button data-act="tab" data-tab="study" aria-pressed="'+(ui.tab==="study")+'">'+ICON.book+'<span class="lg">Studieplanning</span><span class="sh">Studie</span></button>'+
+    '<button data-act="tab" data-tab="study" aria-pressed="'+(ui.tab==="study")+'">'+ICON.timer+'<span class="lg">Studietimer</span><span class="sh">Timer</span></button>'+
     '<button class="theme-btn" data-act="theme" aria-label="'+(curTheme()==="dark"?"Lichte modus":"Donkere modus")+'" title="'+(curTheme()==="dark"?"Lichte modus":"Donkere modus")+'">'+(curTheme()==="dark"?ICON.sun:ICON.moon)+'</button></nav>';
 }
 function renderMoneyApp(){
@@ -1119,7 +1108,7 @@ function renderMoneyApp(){
 }
 function renderApp(){
   if(ui.tab==="money"){ renderMoneyApp(); return; }
-  if(ui.tab==="study"){ renderStudyApp(); return; }
+  if(ui.tab==="study"){ renderTimerApp(); return; }
   var y=+ui.month.slice(0,4), m=+ui.month.slice(5,7)-1;
   var title, sub, sd=parse(ui.sel), isNow;
   if(ui.view==="day"){ isNow=ui.sel===TODAY; title=isNow?"Vandaag":cap(DOW_LONG[sd.getDay()])+" "+sd.getDate()+" "+MONTHS[sd.getMonth()]; sub=isNow?cap(nice(TODAY))+" "+sd.getFullYear():sd.getFullYear(); }
@@ -1144,10 +1133,9 @@ function renderApp(){
     '<div class="filter" role="group" aria-label="Toon items voor">'+
       [["all","Iedereen"],["ewoud","Ewoud"],["helen","Helen"]].map(function(f){return '<button data-act="filter" data-who="'+f[0]+'" aria-pressed="'+(ui.who===f[0])+'">'+f[1]+'</button>';}).join("")+
       '<button class="cls-toggle" data-act="classes" aria-pressed="'+ui.classes+'" title="Lessen '+(ui.classes?"aan":"uit")+'">Lessen<span class="lg"> '+(ui.classes?"aan":"uit")+'</span></button>'+
-      '<button class="cls-toggle st-toggle" data-act="studytog" aria-pressed="'+ui.study+'" title="Studieblokken '+(ui.study?"aan":"uit")+'">Studie<span class="lg"> '+(ui.study?"aan":"uit")+'</span></button>'+
     '</div></div>'+
     (loadState?'<div class="note"><span>'+esc(loadState)+'</span></div>':'')+
-    upcomingBdays()+examCountdown()+
+    upcomingBdays()+
     body+
     (statusText?'<div class="status">'+esc(statusText)+'</div>':'')+
   '</div>'+
@@ -1182,7 +1170,7 @@ function write(id, body){
     });
 }
 function clean(it){ var b={}; for(var k in it){ if(k!=="id" && it[k]!==undefined) b[k]=it[k]; } return b; }
-function unsub(){ if(stopSnap){ stopSnap(); stopSnap=null; } if(typeof stopExpenses==="function") stopExpenses(); if(typeof stopTimeEdit==="function") stopTimeEdit(); if(typeof stopStudy==="function") stopStudy(); }
+function unsub(){ if(stopSnap){ stopSnap(); stopSnap=null; } if(typeof stopExpenses==="function") stopExpenses(); if(typeof stopTimeEdit==="function") stopTimeEdit(); if(typeof stopTimerData==="function") stopTimerData(); }
 function doLogin(){
   loginErr="";
   var p=new firebase.auth.GoogleAuthProvider();
@@ -1205,7 +1193,7 @@ function start(){
     unsub();
     if(!user){ authState="out"; S.items=[]; render(); return; }
     authState="in"; userEmail=user.email||""; userName=cap(((user.displayName||user.email||"").split(/[\s@._]/)[0]||"").toLowerCase()); canWrite=true; loadState="Je kalender wordt geladen…"; render();
-    startExpenses(); startTE(); loadTheme(user); startStudy(user);
+    startExpenses(); startTE(); loadTheme(user); startTimerData(user);
     var t=setTimeout(function(){ loadState = S.items.length ? "Offline: je ziet de laatst opgeslagen versie." : "De kalender is nu niet bereikbaar. Controleer je verbinding."; render(); },10000);
     stopSnap=col.onSnapshot({includeMetadataChanges:true}, function(snap){
       S.items=snap.docs.map(function(doc){ var o=Object.assign({}, doc.data()); o.id=doc.id; return o; }); S.ver=(S.ver||0)+1;
@@ -1352,290 +1340,134 @@ function submitEx(){
   ui.msheet=null; ui.armed=false; render();
 }
 
-/* ---------- Studieplanning: per account, stored in Firestore settings/study-{uid} ---------- */
-var ST={exams:[], prefs:null, state:"loading"}, stopSt=null, stUid="";
-var ST_COLORS=["#c46a10","#8457d1","#2b9469","#d23f66","#3552d4","#16707f","#b8457a","#7a8a12"];
-function stDefaults(){
-  var fx=[]; for(var k=0;k<7;k++) fx.push({on:k<5, from:"09:00", to:"17:00"});
-  return {mode:"auto", from:"09:00", to:"21:00", mix:"one", fixed:fx};
+/* ---------- Studietimer: per account, stored in Firestore settings/timer-{uid} ---------- */
+var TM={subjects:[], sessions:[], running:null, state:"loading"}, stopTm=null, tmUid="";
+var TM_COLORS=["#c46a10","#8457d1","#2b9469","#d23f66","#3552d4","#16707f","#b8457a","#7a8a12"];
+function startTimerData(user){
+  if(!window.firebase) return; tmUid=user.uid||"";
+  stopTm=firebase.firestore().doc("settings/timer-"+tmUid).onSnapshot(function(d){
+    var v=d.exists?d.data():{}; TM.subjects=v.subjects||[]; TM.sessions=v.sessions||[]; TM.running=v.running||null; TM.state="ready";
+    if(!ui.tsheet) render();
+  }, function(err){ TM.state = err&&err.code==="permission-denied" ? "denied" : "error"; render(); });
 }
-function stPrefs(){ var p=ST.prefs||{}, d=stDefaults(); return {mode:p.mode||d.mode, from:p.from||d.from, to:p.to||d.to, mix:p.mix||d.mix, fixed:(p.fixed&&p.fixed.length===7)?p.fixed:d.fixed}; }
-function startStudy(user){
-  if(!window.firebase) return; stUid=user.uid||"";
-  stopSt=firebase.firestore().doc("settings/study-"+stUid).onSnapshot(function(d){
-    var v=d.exists?d.data():{}; ST.exams=v.exams||[]; ST.prefs=v.prefs||null; ST.state="ready"; render();
-  }, function(err){ ST.state = err&&err.code==="permission-denied" ? "denied" : "error"; render(); });
+function stopTimerData(){ if(stopTm){ stopTm(); stopTm=null; } TM={subjects:[], sessions:[], running:null, state:"loading"}; }
+function saveTimer(){
+  if(!tmUid || !window.firebase) return;
+  firebase.firestore().doc("settings/timer-"+tmUid).set({subjects:TM.subjects, sessions:TM.sessions, running:TM.running||null, name:userName||userEmail})
+    .catch(function(err){ statusText = err&&err.code==="permission-denied" ? "Dit account kan de studietimer niet opslaan." : "De timer is niet opgeslagen. Controleer je verbinding en probeer opnieuw."; render(); });
 }
-function stopStudy(){ if(stopSt){ stopSt(); stopSt=null; } ST={exams:[], prefs:null, state:"loading"}; }
-function saveStudy(){
-  if(!stUid || !window.firebase) return;
-  firebase.firestore().doc("settings/study-"+stUid).set({exams:ST.exams, prefs:stPrefs(), name:userName||userEmail})
-    .catch(function(err){ statusText = err&&err.code==="permission-denied" ? "Dit account kan de studieplanning niet opslaan." : "Je studieplanning is niet opgeslagen. Controleer je verbinding en probeer opnieuw."; render(); });
+function clock(ms){ var s=Math.max(0,Math.floor(ms/1000)); return pad(Math.floor(s/3600))+":"+pad(Math.floor(s/60)%60)+":"+pad(s%60); }
+function dur(ms){ var m=Math.round(ms/60000); if(m<1) return "0 min"; var h=Math.floor(m/60); return h ? h+" u"+(m%60?" "+(m%60)+" min":"") : m+" min"; }
+function hhmm(ms){ var d=new Date(ms); return pad(d.getHours())+":"+pad(d.getMinutes()); }
+function subjOf(id){ return TM.subjects.find(function(s){ return s.id===id; }); }
+/* Time studied for a subject (or all subjects) from a moment on, including the timer that is running now. */
+function studied(id, since){
+  var t=0, now=Date.now();
+  TM.sessions.forEach(function(s){ if((!id||s.subjectId===id) && s.end>since) t+=s.end-Math.max(s.start,since); });
+  var r=TM.running; if(r && (!id||r.subjectId===id) && now>since) t+=now-Math.max(r.startedAt,since);
+  return t;
 }
-function myWho(){ var n=(userName||"").toLowerCase(); return (n==="ewoud"||n==="helen") ? n : ""; }
-function hm(m){ return pad(Math.floor(m/60))+":"+pad(m%60); }
-function fmtMins(m){ m=Math.round(m); if(m<60) return m+" min"; var h=m/60; return (Math.round(h*10)/10).toString().replace(".",",")+" u"; }
-function daysBetween(a,b){ return Math.round((parse(b)-parse(a))/864e5); }
-function examStart(ex){ var t=mins(ex.time); return t==null ? 9*60 : t; }
-function examLabel(ex){ return ex.time ? " om "+ex.time : ""; }
-function parseHours(s){ s=String(s||"").trim().replace(",",".").replace(/\s*(u|uur)$/i,""); if(!/^\d+(\.\d+)?$/.test(s)) return NaN; var h=parseFloat(s); return Math.round(h*4)/4; }
-
-/* What already fills this day for me: my events, shared events, classes, and my other exams. */
-function busyOn(date, me){
-  var out=[];
-  allItems().forEach(function(i){
-    if(i.type!=="event" || yearly(i) || mins(i.start)==null) return;
-    if(me && i.who!==me && i.who!=="both") return;
-    if(!(i.repeat==="weekly" ? repOn(i,date) : i.date===date)) return;
-    var s=mins(i.start), e=mins(i.end); if(e==null||e<=s) e=s+60; out.push([s,e]);
-  });
-  ST.exams.forEach(function(ex){ if(ex.date===date){ var s=examStart(ex); out.push([s, s+180]); } });
-  return out.sort(function(a,b){ return a[0]-b[0]; });
+function dayStart(){ return parse(TODAY).getTime(); }
+function weekStartMs(){ return weekStart(TODAY).getTime(); }
+function stopRunning(){
+  var r=TM.running; if(!r) return;
+  var end=Date.now();
+  if(end-r.startedAt>=30000) TM.sessions.push({id:uid(), subjectId:r.subjectId, start:r.startedAt, end:end});
+  TM.running=null;
 }
-function windowOn(date, p){
-  if(p.mode==="fixed"){ var f=p.fixed[(parse(date).getDay()+6)%7]; if(!f||!f.on) return null; return [mins(f.from), mins(f.to)]; }
-  return [mins(p.from), mins(p.to)];
-}
-function freeOn(date, p, me){
-  var w=windowOn(date,p); if(!w||w[0]==null||w[1]==null||w[1]<=w[0]) return [];
-  var free=[[w[0],w[1]]];
-  busyOn(date,me).forEach(function(b){
-    var next=[]; free.forEach(function(f){
-      if(b[1]<=f[0]||b[0]>=f[1]){ next.push(f); return; }
-      if(b[0]>f[0]) next.push([f[0],b[0]]);
-      if(b[1]<f[1]) next.push([b[1],f[1]]);
-    }); free=next;
-  });
-  return free.filter(function(f){ return f[1]-f[0]>=30; });
-}
-/* Fill the free time with the day's study demands; mixing alternates in 1-hour pieces. */
-function fillDay(free, demands, mix){
-  var pieces=[], rem=demands.map(function(d){ return d.mins; });
-  if(mix && demands.length>1){
-    var any=true; while(any){ any=false; demands.forEach(function(d,k){ if(rem[k]>0){ var c=Math.min(60,rem[k]); pieces.push({k:k, m:c}); rem[k]-=c; if(rem[k]>0) any=true; } }); }
-  } else demands.forEach(function(d,k){ pieces.push({k:k, m:rem[k]}); });
-  var blocks=[], got=demands.map(function(){ return 0; }), fi=0, pos=free.length?free[0][0]:0;
-  pieces.forEach(function(pc){
-    var need=pc.m;
-    while(need>0 && fi<free.length){
-      var room=free[fi][1]-pos;
-      if(room<15){ fi++; if(fi<free.length) pos=free[fi][0]; continue; }
-      var take=Math.min(need, room), last=blocks[blocks.length-1];
-      if(last && last.k===pc.k && last.e===pos) last.e+=take; else blocks.push({k:pc.k, s:pos, e:pos+take});
-      pos+=take; need-=take; got[pc.k]+=take;
-    }
-  });
-  return {blocks:blocks, got:got};
-}
-var planMemo={key:"", plan:null};
-function studyPlan(){
-  var p=stPrefs(), me=myWho();
-  var key=JSON.stringify([ST.exams, p, S.ver||0, S.items.length, TODAY, me]);
-  if(planMemo.key===key) return planMemo.plan;
-  var exams=ST.exams.filter(function(e){ return e.date && e.start && e.hours>0; });
-  var byDate={}, warn=[], shortBy={}, days={};
-  exams.forEach(function(e){ days[e.id]=0; });
-  if(exams.length){
-    var first=exams.reduce(function(a,e){ return e.start<a?e.start:a; }, exams[0].start);
-    var last=exams.reduce(function(a,e){ return e.date>a?e.date:a; }, exams[0].date);
-    for(var d=first; d<last; d=addDays(d,1)){
-      var review=exams.filter(function(e){ return addDays(e.date,-1)===d && e.start<=d; });
-      var demands=[], mix=p.mix==="mix";
-      if(review.length){
-        review.forEach(function(e){ demands.push({ex:e, mins:Math.round(e.hours*60), review:true}); });
-        mix=review.length>1;
-      } else {
-        var act=exams.filter(function(e){ return e.start<=d && d<addDays(e.date,-1); });
-        if(!act.length) continue;
-        if(!mix){
-          act.sort(function(a,b){
-            var ra=days[a.id]/Math.max(1,daysBetween(a.start,addDays(a.date,-1))), rb=days[b.id]/Math.max(1,daysBetween(b.start,addDays(b.date,-1)));
-            return ra-rb || (a.date<b.date?-1:a.date>b.date?1:0);
-          });
-          act=[act[0]];
-        } else act.sort(function(a,b){ return a.date<b.date?-1:a.date>b.date?1:0; });
-        act.forEach(function(e){ demands.push({ex:e, mins:Math.round(e.hours*60)}); });
-      }
-      var res=fillDay(freeOn(d,p,me), demands, mix);
-      byDate[d]=res.blocks.map(function(b){ var dm=demands[b.k]; return {ex:dm.ex, s:b.s, e:b.e, review:!!dm.review}; });
-      demands.forEach(function(dm,k){
-        if(!dm.review) days[dm.ex.id]++;
-        if(d>=TODAY){
-          if(dm.review && res.got[k]<dm.mins){ (shortBy[dm.ex.id]=shortBy[dm.ex.id]||{ex:dm.ex,m:0,n:0,rev:true}).rev=true; }
-          else if(!dm.review && res.got[k]<dm.mins){ var o=shortBy[dm.ex.id]=shortBy[dm.ex.id]||{ex:dm.ex,m:0,n:0}; o.m+=dm.mins-res.got[k]; o.n++; }
-        }
-      });
-    }
-    Object.keys(shortBy).forEach(function(id){
-      var o=shortBy[id];
-      if(o.m>0) warn.push(o.ex.subject+": "+fmtMins(o.m)+" te weinig tijd, verspreid over "+o.n+" dag"+(o.n>1?"en":"")+".");
-      if(o.rev) warn.push(o.ex.subject+": op de herhaaldag ("+nice(addDays(o.ex.date,-1))+") is er niet genoeg vrije tijd om "+fmtMins(o.ex.hours*60)+" te herhalen.");
-    });
-    exams.forEach(function(e){
-      if(e.date<TODAY || p.mix==="mix") return;
-      var span=daysBetween(e.start, addDays(e.date,-1));
-      if(span>0 && days[e.id]===0) warn.push(e.subject+" krijgt geen eigen studiedag, alleen de herhaaldag. Begin vroeger of kies voor vakken mengen.");
-    });
-    var sameDay={}; exams.forEach(function(e){ if(e.date>=TODAY) (sameDay[e.date]=sameDay[e.date]||[]).push(e.subject); });
-    Object.keys(sameDay).forEach(function(d){ if(sameDay[d].length>1) warn.push(sameDay[d].join(" en ")+" vallen op dezelfde dag: de herhaaldag wordt gedeeld."); });
-  }
-  planMemo={key:key, plan:{byDate:byDate, warn:warn}};
-  return planMemo.plan;
-}
-/* Study blocks and exams as calendar items (only my own, only when the toggle is on). */
-function studyItemsOn(date){
-  if(!ui.study || ST.state!=="ready") return [];
-  var me=myWho(); if(ui.who!=="all" && me && ui.who!==me) return [];
-  var out=[];
-  ST.exams.forEach(function(ex){ if(ex.date===date) out.push({id:"exam-"+ex.id, type:"event", source:"exam", title:"Examen "+ex.subject, date:date, start:ex.time||"", end:ex.time?hm(examStart(ex)+180):"", who:me, color:ex.color, exId:ex.id}); });
-  (studyPlan().byDate[date]||[]).forEach(function(b){
-    out.push({id:"st-"+b.ex.id+"-"+date+"-"+b.s, type:"event", source:"study", title:(b.review?"Herhalen: ":"Studeren: ")+b.ex.subject, date:date, start:hm(b.s), end:hm(b.e), who:me, color:b.ex.color, exId:b.ex.id});
-  });
-  return out;
-}
-function isStudy(i){ return i.source==="study"||i.source==="exam"; }
-function upcomingExams(){ return ST.exams.filter(function(e){ return e.date>=TODAY; }).sort(function(a,b){ return a.date<b.date?-1:a.date>b.date?1:0; }); }
-function countdownText(e){
-  var n=daysBetween(TODAY,e.date);
-  return n===0 ? "Vandaag examen "+e.subject+examLabel(e) : n===1 ? "Morgen examen "+e.subject+examLabel(e) : "Nog "+n+" dagen tot "+e.subject;
-}
-function examCountdown(){
-  if(ST.state!=="ready") return "";
-  var up=upcomingExams(); if(!up.length) return "";
-  return '<button class="exams-bar" data-act="gostudy"><span class="cake">'+ICON.book+'</span><div><b>'+esc(countdownText(up[0]))+'</b>'+
-    up.slice(1,3).map(function(e){ var n=daysBetween(TODAY,e.date); return '<span>'+esc(e.subject)+' · '+(n===1?"morgen":"over "+n+" dagen")+'</span>'; }).join("")+'</div></button>';
+function startSubject(id){
+  if(TM.running && TM.running.subjectId===id) return;
+  stopRunning(); TM.running={subjectId:id, startedAt:Date.now()}; saveTimer(); render();
 }
 
-function renderStudy(){
-  if(ST.state==="loading") return '<div class="empty">Je studieplanning wordt geladen…</div>';
-  if(ST.state==="denied") return '<div class="empty">Dit account heeft geen toegang tot de studieplanning.</div>';
-  if(ST.state==="error") return '<div class="empty">De studieplanning is nu niet bereikbaar. Controleer je verbinding.</div>';
-  var p=stPrefs(), plan=studyPlan(), up=upcomingExams();
-  var done=ST.exams.filter(function(e){ return e.date<TODAY; }).sort(function(a,b){ return a.date<b.date?1:-1; });
-  var head;
-  if(up.length){
-    var n=daysBetween(TODAY,up[0].date);
-    head='<div class="bal st-count" style="--c:'+esc(up[0].color)+'"><div class="bal-l">'+(n===0?"Vandaag":n===1?"Morgen":"Nog")+'</div>'+
-      (n>1?'<div class="bal-n">'+n+' dagen</div>':'')+'<div class="bal-l">'+(n>1?"tot ":"examen ")+'<b>'+esc(up[0].subject)+'</b>'+esc(n<=1?examLabel(up[0]):"")+'</div>'+
-      '<div class="bal-l sm">'+esc(cap(nice(up[0].date)))+'</div></div>';
-  } else head='<div class="bal settled"><div class="bal-l">Geen examens gepland</div><div class="bal-l sm">Tik op Examen toevoegen om je eerste examen in te geven. Je planning wordt dan automatisch gemaakt.</div></div>';
-  var warn = plan.warn.length ? '<div class="st-warn" role="alert"><b>Niet genoeg tijd</b>'+plan.warn.map(function(w){ return '<span>'+esc(w)+'</span>'; }).join("")+
-    '<span class="sm">Begin vroeger, plan minder uren per dag, of maak meer tijd vrij in de instellingen.</span></div>' : '';
-  var setLine = (p.mode==="fixed" ? "Vaste uren" : "Automatisch, tussen "+p.from+" en "+p.to)+" · "+(p.mix==="mix"?"vakken mengen":"één vak per dag");
-  var settings='<button class="item st-set" data-act="stprefs">'+ICON.gear+'<div class="body"><div class="title">Instellingen planning</div><div class="meta">'+esc(setLine)+'</div></div></button>';
-  var examList = up.length ? '<div class="list">'+up.map(function(e){
-      var n=daysBetween(TODAY,e.date);
-      return '<div class="item" data-act="editexam" data-id="'+e.id+'" role="button" tabindex="0"><span class="bar" style="background:'+esc(e.color)+'"></span>'+
-        '<div class="body"><div class="title-row"><div class="title">'+esc(e.subject)+'</div><span class="st-n">'+(n===0?"vandaag":n===1?"morgen":n+" d")+'</span></div>'+
-        '<div class="meta">Examen '+esc(nice(e.date))+examLabel(e)+'</div>'+
-        '<div class="meta">'+fmtMins(e.hours*60)+' per dag · vanaf '+esc(nice(e.start))+'</div></div></div>';
+function renderTimer(){
+  if(TM.state==="loading") return '<div class="empty">Je studietimer wordt geladen…</div>';
+  if(TM.state==="denied") return '<div class="empty">Dit account heeft geen toegang tot de studietimer.</div>';
+  if(TM.state==="error") return '<div class="empty">De studietimer is nu niet bereikbaar. Controleer je verbinding.</div>';
+  var r=TM.running, rs=r&&subjOf(r.subjectId);
+  var head = r && rs
+    ? '<div class="bal tm-run" style="--c:'+esc(rs.color)+'"><div class="bal-l">Je studeert</div><div class="tm-name">'+esc(rs.name)+'</div>'+
+        '<div class="bal-n tm-clock" id="tm-clock">'+clock(Date.now()-r.startedAt)+'</div><div class="bal-l sm">Gestart om '+hhmm(r.startedAt)+'</div>'+
+        '<button class="tm-stop" data-act="tmstop">'+ICON.stop+'Stoppen</button></div>'
+    : '<div class="bal settled"><div class="bal-l">'+(TM.subjects.length?"Kies een vak en druk op start":"Voeg eerst een vak toe")+'</div><div class="bal-n tm-clock">00:00:00</div>'+
+        '<div class="bal-l sm">'+(TM.subjects.length?"De timer loopt door, ook als je de app sluit.":"Tik op Vak toevoegen, en start daarna de timer voor dat vak.")+'</div></div>';
+  var ds=dayStart(), ws=weekStartMs();
+  var stats='<div class="stats"><div><span>Vandaag</span><b id="tm-today">'+dur(studied(null,ds))+'</b></div><div><span>Deze week</span><b id="tm-week">'+dur(studied(null,ws))+'</b></div></div>';
+  var list = TM.subjects.length ? '<div class="list">'+TM.subjects.map(function(s){
+      var on=r&&r.subjectId===s.id;
+      return '<div class="item tm-subj'+(on?" on":"")+'" style="--c:'+esc(s.color)+'"><span class="bar" style="background:'+esc(s.color)+'"></span>'+
+        '<div class="body" data-act="tmedit" data-id="'+s.id+'" role="button" tabindex="0"><div class="title">'+esc(s.name)+'</div>'+
+        '<div class="meta" data-tm-sub="'+s.id+'">Vandaag '+dur(studied(s.id,ds))+' · week '+dur(studied(s.id,ws))+' · totaal '+dur(studied(s.id,0))+'</div></div>'+
+        '<button class="tm-play'+(on?" on":"")+'" data-act="'+(on?"tmstop":"tmstart")+'" data-id="'+s.id+'" aria-label="'+(on?"Stop":"Start")+' '+esc(s.name)+'">'+(on?ICON.stop:ICON.play)+'</button></div>';
     }).join("")+'</div>' : '';
-  var planHtml="", any=false, lastUp=up.length?up[up.length-1].date:TODAY;
-  for(var d=TODAY; d<=lastUp; d=addDays(d,1)){
-    var bl=(plan.byDate[d]||[]), exs=ST.exams.filter(function(e){ return e.date===d; });
-    if(!bl.length && !exs.length) continue;
-    planHtml+=groupHead(d,!any)+'<div class="list">'+
-      exs.map(function(e){ return '<div class="item st-exam" style="--c:'+esc(e.color)+'"><span class="bar" style="background:'+esc(e.color)+'"></span><div class="time">'+(e.time?esc(e.time):"")+'</div><div class="body"><div class="title-row"><div class="title">Examen '+esc(e.subject)+'</div></div><div class="meta">Succes!</div></div></div>'; }).join("")+
-      bl.map(function(b){ return '<div class="item"><span class="bar" style="background:'+esc(b.ex.color)+'"></span><div class="time">'+hm(b.s)+'<small>'+hm(b.e)+'</small></div><div class="body"><div class="title-row"><div class="title">'+esc(b.ex.subject)+'</div>'+(b.review?'<span class="tag st-tag">Herhalen</span>':'')+'</div><div class="meta">'+fmtMins(b.e-b.s)+(b.review?' · alles nog eens doornemen':' studeren')+'</div></div></div>'; }).join("")+
-    '</div>';
-    any=true;
-  }
-  if(!any) planHtml='<div class="empty">'+(up.length?"Er zijn nog geen studieblokken gepland. Kijk of je startdatum en uren kloppen, en of er vrije tijd is in je instellingen.":"Hier verschijnt je studieplanning, dag per dag.")+'</div>';
-  var doneHtml = done.length ? '<div class="panel-h st-done-h"><h2>Voltooid</h2><span>'+done.length+' vak'+(done.length>1?"ken":"")+'</span></div><div class="list">'+done.map(function(e){
-      return '<div class="item st-done" data-act="editexam" data-id="'+e.id+'" role="button" tabindex="0"><span class="st-ok">'+ICON.tick+'</span><div class="body"><div class="title">'+esc(e.subject)+'</div><div class="meta">Examen op '+esc(longDate(e.date))+'</div></div></div>';
-    }).join("")+'</div>' : '';
-  return '<div class="mny"><div class="mny-l">'+head+warn+
-      (up.length?'<div class="panel-h"><h2>Examens</h2><span>'+up.length+'</span></div>'+examList:'')+settings+'</div>'+
-    '<div class="mny-r"><div class="panel-h"><h2>Planning</h2>'+(any?'<span>vanaf vandaag</span>':'')+'</div>'+planHtml+doneHtml+'</div></div>';
+  var hist="", sess=TM.sessions.slice().sort(function(a,b){ return b.start-a.start; }).slice(0,60), last="";
+  sess.forEach(function(s){
+    var sj=subjOf(s.subjectId), d=iso(new Date(s.start));
+    if(d!==last){ hist+=(last?'</div>':'')+groupHead(d,!last)+'<div class="list">'; last=d; }
+    hist+='<div class="item" data-act="tmsess" data-id="'+s.id+'" role="button" tabindex="0"><span class="bar" style="background:'+esc(sj?sj.color:"#888")+'"></span>'+
+      '<div class="time">'+hhmm(s.start)+'<small>'+hhmm(s.end)+'</small></div><div class="body"><div class="title-row"><div class="title">'+esc(sj?sj.name:"Verwijderd vak")+'</div><span class="st-n">'+dur(s.end-s.start)+'</span></div></div></div>';
+  });
+  if(hist) hist+='</div>'; else hist='<div class="empty">Hier verschijnt elke keer dat je gestudeerd hebt.</div>';
+  return '<div class="mny"><div class="mny-l">'+head+stats+
+      '<div class="panel-h"><h2>Vakken</h2>'+(TM.subjects.length?'<span>'+TM.subjects.length+'</span>':'')+'</div>'+list+'</div>'+
+    '<div class="mny-r"><div class="panel-h"><h2>Geschiedenis</h2></div>'+hist+'</div></div>';
 }
-function renderStudyApp(){
-  var h='<div class="wrap'+(isDesk()?" desk":"")+'"><div class="toolbar">'+appNav()+'</div>'+renderStudy()+
+function renderTimerApp(){
+  var h='<div class="wrap'+(isDesk()?" desk":"")+'"><div class="toolbar">'+appNav()+'</div>'+renderTimer()+
     (statusText?'<div class="status">'+esc(statusText)+'</div>':'')+'</div>'+
-    (ST.state==="ready"?'<button class="fab" data-act="addexam">'+ICON.plus+'<span>Examen toevoegen</span></button>':'')+
+    (TM.state==="ready"?'<button class="fab" data-act="tmadd">'+ICON.plus+'<span>Vak toevoegen</span></button>':'')+
     '<button class="gear" data-act="menu" aria-label="Instellingen" aria-expanded="'+(!!ui.menu)+'">'+ICON.gear+'</button>'+renderMenu()+
-    (ui.xsheet?renderExamSheet():"")+(ui.psheet?renderPrefsSheet():"")+(ui.ssheet?renderTESheet():"");
+    (ui.tsheet?renderSubjSheet():"")+(ui.ssheet?renderTESheet():"");
   var active=document.activeElement&&document.activeElement.id;
   document.documentElement.classList.remove("lockpage");
   document.getElementById("root").innerHTML=h;
   if(active){var el=document.getElementById(active); if(el) el.focus();}
 }
-function renderExamSheet(){
-  var it=ui.xsheet;
-  return '<div class="scrim" data-act="scrim"><form class="sheet" id="xsheet" novalidate>'+
-    '<div class="sheet-h"><h3>'+(it.id?"Examen wijzigen":"Nieuw examen")+'</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
-    '<div class="field"><label for="e-sub">Vak</label><input id="e-sub" value="'+esc(it.subject)+'" placeholder="bv. Statistiek" autocomplete="off"></div>'+
-    '<div class="row">'+dateField("e-date","Examendatum",it.date,it._dateRaw)+
-      '<div class="field"><label for="e-time">Uur (optioneel)</label><input id="e-time" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(it.time)+'"></div></div>'+
-    dateField("e-start","Begin met studeren op",it.start,it._startRaw)+
-    '<div class="field"><label for="e-hours">Uren per dag voor dit vak</label><input id="e-hours" inputmode="decimal" value="'+esc(it.hoursStr)+'" placeholder="bv. 3 of 1,5" autocomplete="off"></div>'+
-    '<p class="hint">De dag voor het examen herhaal je dit vak, met hetzelfde aantal uur. Na het examen komt het vak bij Voltooid.</p>'+
+/* Tick every second: only the numbers change, the rest of the page stays put. */
+setInterval(function(){
+  if(authState!=="in" || ui.tab!=="study" || !TM.running) return;
+  var c=document.getElementById("tm-clock"); if(c) c.textContent=clock(Date.now()-TM.running.startedAt);
+  if(new Date().getSeconds()%15) return;
+  var ds=dayStart(), ws=weekStartMs(), a=document.getElementById("tm-today"), b=document.getElementById("tm-week");
+  if(a) a.textContent=dur(studied(null,ds)); if(b) b.textContent=dur(studied(null,ws));
+  var m=document.querySelector('[data-tm-sub="'+TM.running.subjectId+'"]'), id=TM.running.subjectId;
+  if(m) m.textContent='Vandaag '+dur(studied(id,ds))+' · week '+dur(studied(id,ws))+' · totaal '+dur(studied(id,0));
+}, 1000);
+
+function renderSubjSheet(){
+  var it=ui.tsheet;
+  if(it.kind==="session"){
+    var sj=subjOf(it.subjectId);
+    return '<div class="scrim" data-act="scrim"><form class="sheet" id="tsheet" novalidate>'+
+      '<div class="sheet-h"><h3>Studiesessie</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
+      '<p class="tm-sess"><b>'+esc(sj?sj.name:"Verwijderd vak")+'</b><span>'+esc(cap(nice(iso(new Date(it.start)))))+', '+hhmm(it.start)+'–'+hhmm(it.end)+' · '+dur(it.end-it.start)+'</span></p>'+
+      '<div class="actions"><button type="button" class="del'+(ui.armed?" armed":"")+'" data-act="tmdelsess">'+(ui.armed?"Tik nogmaals om te verwijderen":"Sessie verwijderen")+'</button></div>'+
+    '</form></div>';
+  }
+  var sw=TM_COLORS.map(function(c){ return '<button type="button" style="background:'+c+'" aria-label="Kleur '+c+'" aria-pressed="'+(it.color===c)+'" data-act="tmcolor" data-c="'+c+'"></button>'; }).join("");
+  return '<div class="scrim" data-act="scrim"><form class="sheet" id="tsheet" novalidate>'+
+    '<div class="sheet-h"><h3>'+(it.id?"Vak wijzigen":"Nieuw vak")+'</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
+    '<div class="field"><label for="t-name">Naam van het vak</label><input id="t-name" value="'+esc(it.name)+'" placeholder="bv. Statistiek" autocomplete="off"></div>'+
+    '<div class="field"><label>Kleur</label><div class="swatches">'+sw+'</div></div>'+
+    (it.id?'<p class="hint">Totaal gestudeerd: '+dur(studied(it.id,0))+'.</p>':'')+
     '<p class="err" role="alert">'+esc(ui.err)+'</p>'+
-    '<div class="actions">'+(it.id?'<button type="button" class="del'+(ui.armed?" armed":"")+'" data-act="delexam">'+(ui.armed?"Tik nogmaals om te verwijderen":"Verwijderen")+'</button>':'')+
-    '<button type="submit" class="primary">'+(it.id?"Wijzigingen opslaan":"Examen toevoegen")+'</button></div>'+
+    '<div class="actions">'+(it.id?'<button type="button" class="del'+(ui.armed?" armed":"")+'" data-act="tmdel">'+(ui.armed?"Tik nogmaals: vak en gemeten tijd verwijderen":"Verwijderen")+'</button>':'')+
+    '<button type="submit" class="primary">'+(it.id?"Opslaan":"Vak toevoegen")+'</button></div>'+
   '</form></div>';
 }
-function readExamForm(){
-  var it=ui.xsheet, g=function(id){ var e=document.getElementById(id); return e?e.value.trim():null; }, v;
-  if((v=g("e-sub"))!==null) it.subject=v;
-  if((v=g("e-time"))!==null) it.time=v;
-  if((v=g("e-hours"))!==null) it.hoursStr=v;
-  var a=readDate("e-date"); if(a){ it.date=a.iso||""; it._dateRaw=a.raw&&a.raw.length?a.raw:null; }
-  var b=readDate("e-start"); if(b){ it.start=b.iso||""; it._startRaw=b.raw&&b.raw.length?b.raw:null; }
-}
-function openExam(src){
-  if(src) ui.xsheet={id:src.id, subject:src.subject, date:src.date, time:src.time||"", start:src.start, hoursStr:String(src.hours).replace(".",","), color:src.color};
-  else { var used=ST.exams.filter(function(e){ return e.date>=TODAY; }).map(function(e){ return e.color; });
-    ui.xsheet={subject:"", date:"", time:"", start:TODAY, hoursStr:"", color:ST_COLORS.filter(function(c){ return used.indexOf(c)<0; })[0]||ST_COLORS[ST.exams.length%ST_COLORS.length]}; }
+function readSubjForm(){ var e=document.getElementById("t-name"); if(e&&ui.tsheet) ui.tsheet.name=e.value.trim(); }
+function openSubj(src){
+  if(src) ui.tsheet={id:src.id, name:src.name, color:src.color};
+  else { var used=TM.subjects.map(function(s){ return s.color; }); ui.tsheet={name:"", color:TM_COLORS.filter(function(c){ return used.indexOf(c)<0; })[0]||TM_COLORS[TM.subjects.length%TM_COLORS.length]}; }
   ui.err=""; ui.armed=false; render();
-  setTimeout(function(){ var t=document.getElementById("e-sub"); if(t&&!src) t.focus(); },30);
+  setTimeout(function(){ var t=document.getElementById("t-name"); if(t&&!src) t.focus(); },30);
 }
-function submitExam(){
-  readExamForm(); var it=ui.xsheet, h=parseHours(it.hoursStr), t=normTime(it.time);
-  if(!it.subject){ ui.err="Vul het vak in."; render(); return; }
-  if(!it.date||it._dateRaw){ ui.err="Vul de examendatum in als dd/mm/jjjj."; render(); return; }
-  if(!t.ok){ ui.err="Vul het uur in als uu:mm, bv. 09:00, of laat het leeg."; render(); return; }
-  if(!it.start||it._startRaw){ ui.err="Vul in wanneer je begint met studeren, als dd/mm/jjjj."; render(); return; }
-  if(it.start>=it.date){ ui.err="Begin minstens een dag voor het examen met studeren."; render(); return; }
-  if(isNaN(h)||h<=0||h>16){ ui.err="Vul in hoeveel uur per dag, bv. 3 of 1,5."; render(); return; }
-  var rec={id:it.id||uid(), subject:it.subject, date:it.date, time:t.v, start:it.start, hours:h, color:it.color||ST_COLORS[0]};
-  var ix=ST.exams.findIndex(function(e){ return e.id===rec.id; });
-  if(ix>=0) ST.exams[ix]=rec; else ST.exams.push(rec);
-  ui.xsheet=null; ui.armed=false; saveStudy(); render();
-}
-function renderPrefsSheet(){
-  var p=ui.psheet;
-  var seg=function(k,v,l){ return '<button type="button" data-act="stset" data-k="'+k+'" data-v="'+v+'" aria-pressed="'+(p[k]===v)+'">'+l+'</button>'; };
-  var tf=function(id,val){ return '<input id="'+id+'" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(val)+'">'; };
-  var body = p.mode==="fixed"
-    ? '<div class="field"><label>Vaste studie-uren per dag</label><div class="st-days">'+p.fixed.map(function(f,k){
-        return '<div class="st-day'+(f.on?"":" off")+'"><button type="button" class="st-dtog" data-act="stday" data-k="'+k+'" aria-pressed="'+f.on+'">'+cap(DOW_LONG[(k+1)%7])+'</button>'+
-          (f.on?tf("p-f"+k,f.from)+'<span>tot</span>'+tf("p-t"+k,f.to):'<em>Niet studeren</em>')+'</div>';
-      }).join("")+'</div><p class="hint">Tik op een dag om hem aan of uit te zetten. Lessen en afspraken in die uren worden overgeslagen.</p></div>'
-    : '<div class="field"><label>Plannen tussen</label><div class="row">'+tf("p-from",p.from)+tf("p-to",p.to)+'</div><p class="hint">Studieblokken komen rond je lessen en afspraken.</p></div>';
-  return '<div class="scrim" data-act="scrim"><form class="sheet" id="psheet" novalidate>'+
-    '<div class="sheet-h"><h3>Instellingen planning</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
-    '<div class="field"><label>Wanneer plannen?</label><div class="tabs">'+seg("mode","auto","Automatisch")+seg("mode","fixed","Vaste uren")+'</div></div>'+
-    body+
-    '<div class="field"><label>Vakken per dag</label><div class="tabs">'+seg("mix","one","Eén vak per dag")+seg("mix","mix","Vakken mengen")+'</div>'+
-      '<p class="hint">'+(p.mix==="mix"?"Elke dag studeer je alle vakken waarvoor je bezig bent, afgewisseld per uur.":"Elke dag één vak; de vakken wisselen elkaar af.")+'</p></div>'+
-    '<p class="err" role="alert">'+esc(ui.err)+'</p>'+
-    '<div class="actions"><button type="submit" class="primary">Opslaan</button></div>'+
-  '</form></div>';
-}
-function readPrefsForm(){
-  var p=ui.psheet, g=function(id){ var e=document.getElementById(id); return e?e.value.trim():null; }, v;
-  if((v=g("p-from"))!==null) p.from=v; if((v=g("p-to"))!==null) p.to=v;
-  p.fixed.forEach(function(f,k){ if((v=g("p-f"+k))!==null) f.from=v; if((v=g("p-t"+k))!==null) f.to=v; });
-}
-function openPrefs(){ ui.psheet=JSON.parse(JSON.stringify(stPrefs())); ui.err=""; render(); }
-function submitPrefs(){
-  readPrefsForm(); var p=ui.psheet, bad=false;
-  var chk=function(a,b){ var x=normTime(a), y=normTime(b); if(!x.ok||!y.ok||!x.v||!y.v||y.v<=x.v){ bad=true; return null; } return [x.v,y.v]; };
-  if(p.mode==="auto"){ var r=chk(p.from,p.to); if(r){ p.from=r[0]; p.to=r[1]; } }
-  else p.fixed.forEach(function(f){ if(!f.on) return; var r=chk(f.from,f.to); if(r){ f.from=r[0]; f.to=r[1]; } });
-  if(bad){ ui.err="Vul de uren in als uu:mm, en zorg dat het einde na het begin ligt."; render(); return; }
-  if(p.mode==="fixed" && !p.fixed.some(function(f){ return f.on; })){ ui.err="Zet minstens één dag aan."; render(); return; }
-  ST.prefs=p; ui.psheet=null; saveStudy(); render();
+function submitSubj(){
+  readSubjForm(); var it=ui.tsheet;
+  if(!it.name){ ui.err="Vul de naam van het vak in."; render(); return; }
+  if(it.id){ var s=subjOf(it.id); if(s){ s.name=it.name; s.color=it.color; } }
+  else TM.subjects.push({id:uid(), name:it.name, color:it.color});
+  ui.tsheet=null; saveTimer(); render();
 }
 
 /* ---------- Actions ---------- */
@@ -1658,7 +1490,7 @@ document.addEventListener("click",function(e){
   var t=e.target.closest("[data-act],[data-stop]"); if(!t) return;
   if(t.hasAttribute("data-stop")) return;
   var act=t.getAttribute("data-act");
-  if(act==="scrim"){ if(e.target===t){ui.sheet=null;ui.msheet=null;ui.ssheet=null;ui.xsheet=null;ui.psheet=null;render();} return; }
+  if(act==="scrim"){ if(e.target===t){ui.sheet=null;ui.msheet=null;ui.ssheet=null;ui.tsheet=null;render();} return; }
   switch(act){
     case "login": doLogin(); break;
     case "theme": toggleTheme(); break;
@@ -1693,23 +1525,27 @@ document.addEventListener("click",function(e){
         if(c.repeat==="weekly"){ var dd=t.dataset.date, list=c.doneDates||[], ix=list.indexOf(dd); if(ix>=0) list.splice(ix,1); else list.push(dd); c.doneDates=list; it.doneDates=list.slice(); }
         else { c.done=!c.done; it.done=c.done; }
         write(c.id, clean(c)); render(); } break;
-    case "close": ui.sheet=null; ui.msheet=null; ui.ssheet=null; ui.xsheet=null; ui.psheet=null; render(); break;
-    case "gostudy": ui.tab="study"; saveUI(); render(); window.scrollTo(0,0); break;
-    case "studytog": ui.study=!ui.study; saveUI(); render(); break;
-    case "addexam": openExam(null); break;
-    case "editexam": var exm=ST.exams.find(function(x){return x.id===t.dataset.id;}); if(exm) openExam(exm); break;
-    case "delexam":
-      if(!ui.armed){ readExamForm(); ui.armed=true; render(); break; }
-      var eid=ui.xsheet.id; ST.exams=ST.exams.filter(function(x){return x.id!==eid;}); ui.xsheet=null; ui.armed=false; saveStudy(); render(); break;
-    case "stprefs": openPrefs(); break;
-    case "stset": readPrefsForm(); ui.psheet[t.dataset.k]=t.dataset.v; ui.err=""; render(); break;
-    case "stday": readPrefsForm(); var fd=ui.psheet.fixed[+t.dataset.k]; fd.on=!fd.on; render(); break;
+    case "close": ui.sheet=null; ui.msheet=null; ui.ssheet=null; ui.tsheet=null; render(); break;
+    case "tmadd": openSubj(null); break;
+    case "tmedit": var sj=subjOf(t.dataset.id); if(sj) openSubj(sj); break;
+    case "tmstart": startSubject(t.dataset.id); break;
+    case "tmstop": stopRunning(); saveTimer(); render(); break;
+    case "tmcolor": readSubjForm(); ui.tsheet.color=t.dataset.c; render(); break;
+    case "tmdel":
+      if(!ui.armed){ readSubjForm(); ui.armed=true; render(); break; }
+      var sid=ui.tsheet.id; if(TM.running&&TM.running.subjectId===sid) TM.running=null;
+      TM.subjects=TM.subjects.filter(function(s){return s.id!==sid;}); TM.sessions=TM.sessions.filter(function(s){return s.subjectId!==sid;});
+      ui.tsheet=null; ui.armed=false; saveTimer(); render(); break;
+    case "tmsess": var se=TM.sessions.find(function(s){return s.id===t.dataset.id;}); if(se){ ui.tsheet=Object.assign({kind:"session"},se); ui.armed=false; render(); } break;
+    case "tmdelsess":
+      if(!ui.armed){ ui.armed=true; render(); break; }
+      var ssid=ui.tsheet.id; TM.sessions=TM.sessions.filter(function(s){return s.id!==ssid;}); ui.tsheet=null; ui.armed=false; saveTimer(); render(); break;
     case "te-color": readTEForm(); setTEColor(t.dataset.k, t.dataset.c, true); render(); break;
     case "lk-tab": readTEForm(); ui.ssheet.tab=t.dataset.w; ui.err=""; render(); break;
     case "te-open": ui.menu=false; ui.ssheet={}; ui.err=""; render(); break;
     case "te-edit": readTEForm(); ui.ssheet[t.dataset.k]=""; render(); var f=document.getElementById("lk-"+t.dataset.k); if(f) f.focus(); break;
     case "te-remove": readTEForm(); ui.ssheet[t.dataset.k]=""; ui.ssheet["rm_"+t.dataset.k]=true; render(); break;
-    case "tab": ui.tab=t.dataset.tab; ui.sheet=null; ui.msheet=null; ui.xsheet=null; ui.psheet=null; saveUI(); render(); window.scrollTo(0,0); break;
+    case "tab": ui.tab=t.dataset.tab; ui.sheet=null; ui.msheet=null; ui.tsheet=null; saveUI(); render(); window.scrollTo(0,0); break;
     case "addex": if(canWrite) openEx("expense"); break;
     case "settle": if(canWrite) openEx("settle"); break;
     case "editex": if(!canWrite) break; var ex=EX.find(function(x){return x.id===t.dataset.id;}); if(ex) openEx(ex.kind, ex); break;
@@ -1729,8 +1565,8 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("keydown",function(e){
   if(e.key==="Escape"&&ui.menu){ui.menu=false;render();return;}
-  if(e.key==="Escape"&&(ui.sheet||ui.msheet||ui.ssheet||ui.xsheet||ui.psheet)){ui.sheet=null;ui.msheet=null;ui.ssheet=null;ui.xsheet=null;ui.psheet=null;render();return;}
-  if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches('.item[data-act="edit"],.item[data-act="editex"],.item[data-act="editexam"],.item[data-act="gostudy"]')){e.preventDefault();e.target.click();}
+  if(e.key==="Escape"&&(ui.sheet||ui.msheet||ui.ssheet||ui.tsheet)){ui.sheet=null;ui.msheet=null;ui.ssheet=null;ui.tsheet=null;render();return;}
+  if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches('.item[data-act="edit"],.item[data-act="editex"],.item[data-act="tmsess"],.body[data-act="tmedit"]')){e.preventDefault();e.target.click();}
 });
 document.addEventListener("input",function(e){
   if(e.target.classList&&e.target.classList.contains("te-pick")){ var row=e.target.closest(".te-color"); if(row){ row.querySelector(".own-pick").style.setProperty("--pick",e.target.value); var pv=row.querySelector(".te-prev"); if(pv) pv.style.setProperty("--c",e.target.value); } return; }
@@ -1743,8 +1579,7 @@ document.addEventListener("submit",function(e){
   e.preventDefault();
   if(e.target.id==="msheet"){ submitEx(); return; }
   if(e.target.id==="tesheet"){ saveTE(); return; }
-  if(e.target.id==="xsheet"){ submitExam(); return; }
-  if(e.target.id==="psheet"){ submitPrefs(); return; }
+  if(e.target.id==="tsheet"){ if(ui.tsheet&&ui.tsheet.kind!=="session") submitSubj(); return; }
   readForm(); var it=ui.sheet;
   if(!it.who){ui.err="Kies voor wie het is: Ewoud, Helen of beiden."; render(); return;}
   if(!it.title){ui.err=it.type==="birthday"?"Vul de naam in.":"Geef eerst een titel op."; render(); return;}
@@ -1770,7 +1605,7 @@ document.addEventListener("submit",function(e){
 render();
 start();
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(function(){}); }
-document.addEventListener('visibilitychange',function(){ if(!document.hidden && authState==="in" && !ui.sheet && !ui.msheet && !ui.ssheet && !ui.xsheet && !ui.psheet){ ui._lastKey=null; ui._hKey=null; render(); }
+document.addEventListener('visibilitychange',function(){ if(!document.hidden && authState==="in" && !ui.sheet && !ui.msheet && !ui.ssheet && !ui.tsheet){ ui._lastKey=null; ui._hKey=null; render(); }
   if(!document.hidden){ var t=iso(new Date()); if(t!==TODAY){ if(ui.sel===TODAY) ui.sel=t; TODAY=t; ui.month=ui.sel.slice(0,7); render(); } } });
 })();
 </script>
