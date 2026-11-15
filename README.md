@@ -4,6 +4,7 @@ A shared calendar for Ewoud and Helen, with events (time and location), tasks, a
 
 - **App:** `index.html`, installable on Android (Chrome → ⋮ → Install app). Opens full screen with no browser bar.
 - **Sign-in and sync:** Firebase (Google sign-in plus a Firestore database). Only the two addresses in `firestore.rules` get access.
+- **Brievenbus (Claude):** Claude puts encrypted files in `inbox/`; `.github/workflows/inbox.yml` imports them into the calendar on every push (secret `INBOX_KEY`).
 - **Meldingen:** gear menu → Meldingen, per device. `.github/workflows/notify.yml` runs `scripts/notify.py` every 10 minutes and sends them through Firebase Cloud Messaging (same `FIREBASE_SERVICE_ACCOUNT` secret).
 - **TimeEdit + Google Agenda:** `.github/workflows/timeedit.yml` runs `scripts/sync_timeedit.py` every morning. Links are pasted in the app under the gear menu → Koppelingen.
 
