@@ -378,6 +378,13 @@ button{cursor:pointer}
 html.lockpage,html.lockpage body{height:100%;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;width:100%}
 html.lockpage #root{height:100%;overflow:hidden}
 .tg-scroll{overscroll-behavior:contain;touch-action:pan-x pan-y}
+.tg-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:0;background:transparent;padding:8px 2px;text-align:left;color:inherit;font:inherit}
+.tg-row span{display:flex;flex-direction:column;gap:2px}.tg-row b{font-weight:600;font-size:15px}.tg-row small{font-size:13px;color:var(--muted)}
+.tg{flex:none;width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;transition:background .15s}
+.tg::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+.tg-row[aria-checked="true"] .tg{background:var(--accent)}.tg-row[aria-checked="true"] .tg::after{transform:translateX(18px)}
+.pp-ch{margin:-2px 0 6px}.pp-ch button{flex:1;white-space:nowrap;padding:7px 2px;font-size:14px}
+.push-dev .primary{width:100%;height:46px;border:0;border-radius:12px;background:var(--accent);color:var(--on-accent,#fff);font-weight:600;font-size:15px}.push-dev .primary:disabled{opacity:.6}
 .lk-sec{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:14px;padding:12px}
 .lk-sec input[type=url]{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;min-height:44px;font-size:14px}
 .lk-sec h4{margin:0;display:flex;align-items:center;gap:8px;font-size:15px}
@@ -447,6 +454,7 @@ html.lockpage #root{height:100%;overflow:hidden}
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-messaging-compat.js"></script>
 <script src="config.js"></script>
 <script id="app">
 (function(){
@@ -504,6 +512,7 @@ var ICON = {
   play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z"/></svg>',
   stop:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>',
   book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M8.5 7.5h7"/></svg>',
+  bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4s2-1.5 2-6.5z"/><path d="M10 19.5a2.2 2.2 0 0 0 4 0"/></svg>',
   note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h9"/></svg>'
 };
 
@@ -937,6 +946,7 @@ function linkBlock(key, kind, w){
     '</div><div class="own"><label class="own-pick" style="--pick:'+col+'"><input type="color" class="te-pick" data-k="'+ckey+'" value="'+col+'" aria-label="Eigen kleur"><span>Eigen kleur</span></label><span class="te-prev" style="--c:'+col+'">Voorbeeld</span></div></div>';
 }
 function renderTESheet(){
+  if(ui.ssheet.kind==="push") return renderPushSheet();
   var w=ui.ssheet.tab||(userName.toLowerCase()==="helen"?"helen":"ewoud");
   var n=function(p){ return (TE[p]?1:0)+(TE["gcal_"+p]?1:0); };
   return '<div class="scrim" data-act="scrim"><form class="sheet" id="tesheet" novalidate>'+
@@ -994,6 +1004,115 @@ function saveTE(){
   }).catch(function(err){
     ui.err = err&&err.code==="permission-denied" ? "Opslaan mag nog niet: de Firebase-regels moeten bijgewerkt worden." : "Opslaan is niet gelukt. Controleer je verbinding."; render();
   });
+}
+
+/* ---------- Meldingen: push notifications through Firebase Cloud Messaging ----------
+   Per account in settings/push-{uid}: the devices (tokens) that get notifications and what to send.
+   scripts/notify.py (GitHub Actions, every 10 minutes) reads these and sends the notifications. */
+var PUSH={state:"idle", prefs:{}, tokens:{}, err:"", busy:false}, pushUid="", stopPush=null, myToken="";
+try{ myToken=localStorage.getItem("cal-push-token")||""; }catch(e){}
+var PUSH_DEF={events:true, before:30, lessons:false, morning:true, morningAt:"08:00", bdays:true, partner:true, money:true};
+function pushPrefs(){ return Object.assign({}, PUSH_DEF, PUSH.prefs||{}); }
+function myPerson(){ var n=(userName||"").toLowerCase(); return n==="helen"?"helen":n==="ewoud"?"ewoud":""; }
+function partnerName(){ return myPerson()==="helen"?"Ewoud":"Helen"; }
+function pushSupported(){ return ("serviceWorker" in navigator) && ("PushManager" in window) && ("Notification" in window) && !!(window.firebase && firebase.messaging); }
+function pushOnHere(){ return !!(myToken && PUSH.tokens[myToken] && window.Notification && Notification.permission==="granted"); }
+function pushDocRef(){ return firebase.firestore().doc("settings/push-"+pushUid); }
+function startPush(user){
+  pushUid=user.uid;
+  stopPush=pushDocRef().onSnapshot(function(d){
+    var v=d.exists?d.data():{}; PUSH.prefs=v.prefs||{}; PUSH.tokens=v.tokens||{}; PUSH.state="ready";
+    /* Tokens can change: renew this device's token quietly once per start. */
+    if(!PUSH._renewed){ PUSH._renewed=true; if(myToken && PUSH.tokens[myToken] && window.Notification && Notification.permission==="granted") registerPush(true); }
+    if(ui.ssheet && ui.ssheet.kind==="push") render();
+  }, function(){ PUSH.state="error"; });
+}
+function stopPushData(){ if(stopPush){ stopPush(); stopPush=null; } PUSH={state:"idle", prefs:{}, tokens:{}, err:"", busy:false}; pushUid=""; }
+function deviceName(){ var u=navigator.userAgent; return /Android/i.test(u)?"Android-telefoon":/iPhone|iPad/i.test(u)?"iPhone of iPad":/Windows/i.test(u)?"Windows-pc":/Macintosh/i.test(u)?"Mac":"Toestel"; }
+function registerPush(quiet){
+  if(!pushSupported()){
+    PUSH.err="Hier kunnen geen meldingen binnenkomen. Installeer de app op je telefoon (in Chrome: ⋮ → App installeren) en open hem via het icoon op je startscherm."; render(); return;
+  }
+  if(!quiet){ PUSH.busy=true; PUSH.err=""; render(); }
+  var reg;
+  (quiet ? Promise.resolve("granted") : Notification.requestPermission()).then(function(p){
+    if(p!=="granted") throw {code:"denied"};
+    return navigator.serviceWorker.register("sw.js");
+  }).then(function(r){ reg=r; return navigator.serviceWorker.ready; })
+  .then(function(){ return firebase.messaging().getToken({serviceWorkerRegistration:reg}); })
+  .then(function(tok){
+    if(!tok) throw {code:"notoken"};
+    var tokens={}; tokens[tok]={device:deviceName(), at:new Date().toISOString()};
+    if(myToken && myToken!==tok) tokens[myToken]=firebase.firestore.FieldValue.delete();
+    myToken=tok; try{ localStorage.setItem("cal-push-token",tok); }catch(e){}
+    return pushDocRef().set({name:userName||userEmail, person:myPerson(), tokens:tokens}, {merge:true});
+  }).then(function(){
+    PUSH.busy=false;
+    if(!quiet){ statusText=""; pushTest(); }
+    render();
+  }).catch(function(err){
+    PUSH.busy=false; if(quiet) return;
+    var c=err&&err.code||"";
+    PUSH.err = c==="denied" || /permission-blocked|permission-default/.test(c)
+      ? "Je telefoon blokkeert meldingen voor deze app. Zet ze aan via de instellingen van je telefoon (Apps → Kalender → Meldingen) en probeer opnieuw."
+      : /unsupported/.test(c) ? "Deze browser ondersteunt geen meldingen. Open de geïnstalleerde app van je startscherm."
+      : "Meldingen aanzetten is niet gelukt"+(c?" ("+c+")":"")+". Controleer je verbinding en probeer opnieuw.";
+    render();
+  });
+}
+function unregisterPush(){
+  var tok=myToken; if(!tok){ render(); return; }
+  var tokens={}; tokens[tok]=firebase.firestore.FieldValue.delete();
+  pushDocRef().set({tokens:tokens},{merge:true}).catch(function(){});
+  try{ firebase.messaging().deleteToken().catch(function(){}); }catch(e){}
+  myToken=""; try{ localStorage.removeItem("cal-push-token"); }catch(e){}
+  render();
+}
+function setPushPref(k, v){
+  PUSH.prefs=Object.assign({}, PUSH.prefs); PUSH.prefs[k]=v;
+  var p={}; p[k]=v;
+  pushDocRef().set({name:userName||userEmail, person:myPerson(), prefs:p},{merge:true}).catch(function(){ PUSH.err="De instelling kon niet bewaard worden. Controleer je verbinding."; render(); });
+  render();
+}
+function pushTest(){
+  if(!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.ready.then(function(reg){
+    return reg.showNotification("Meldingen staan aan", {body:"Zo zien je meldingen van Onze kalender eruit.", icon:"icon-192.png", badge:"icon-192.png", tag:"test"});
+  }).catch(function(){});
+}
+function pushToggle(k, label, sub){
+  var on=!!pushPrefs()[k];
+  return '<button type="button" class="tg-row" data-act="pp" data-k="'+k+'" data-v="'+(!on)+'" role="switch" aria-checked="'+on+'"><span><b>'+label+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</span><i class="tg" aria-hidden="true"></i></button>';
+}
+function pushChoices(k, opts){
+  var cur=String(pushPrefs()[k]);
+  return '<div class="tabs mini pp-ch" role="group">'+opts.map(function(o){ return '<button type="button" data-act="pp" data-k="'+k+'" data-v="'+o[0]+'" aria-pressed="'+(cur===String(o[0]))+'">'+o[1]+'</button>'; }).join("")+'</div>';
+}
+function renderPushSheet(){
+  var p=pushPrefs(), here=pushOnHere(), others=Object.keys(PUSH.tokens).filter(function(t){ return t!==myToken; }).length;
+  var blocked=window.Notification && Notification.permission==="denied";
+  return '<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-label="Meldingen">'+
+    '<div class="sheet-h"><h3>Meldingen</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
+    '<section class="lk-sec push-dev"><h4>'+ICON.bell+'Op dit toestel</h4>'+
+      (here
+        ? '<div class="te-linked"><span class="ok">Aan</span><small>'+esc(deviceName())+'</small><div class="te-actions"><button type="button" class="pill-btn" data-act="push-test">Testmelding</button><button type="button" class="pill-btn danger" data-act="push-off">Uitzetten</button></div></div>'
+        : '<p class="hint">'+(blocked?'Meldingen zijn geblokkeerd voor deze app. Zet ze eerst aan in de instellingen van je telefoon (Apps → Kalender → Meldingen).':'Zet meldingen aan op elk toestel waar je ze wil krijgen. Op je telefoon moet de app geïnstalleerd zijn.')+'</p>'+
+          '<button type="button" class="primary" data-act="push-on"'+(PUSH.busy?' disabled':'')+'>'+(PUSH.busy?'Bezig…':'Meldingen aanzetten')+'</button>')+
+      (others?'<p class="hint">Ook aan op '+others+' ander'+(others>1?'e':'')+' toestel'+(others>1?'len':'')+'.</p>':'')+
+      (PUSH.err?'<p class="err" role="alert">'+esc(PUSH.err)+'</p>':'')+
+    '</section>'+
+    '<section class="lk-sec"><h4>'+ICON.cal+'Wat wil je krijgen?</h4>'+
+      pushToggle("events","Herinnering voor afspraken","Ook voor taken met een uur")+
+      (p.events ? '<span class="lbl">Hoeveel op voorhand</span>'+pushChoices("before",[[10,"10 min"],[15,"15 min"],[30,"30 min"],[60,"1 uur"],[120,"2 uur"]])+
+        pushToggle("lessons","Ook voor lessen","Uit TimeEdit") : '')+
+      pushToggle("morning","Dagoverzicht ’s ochtends","Je afspraken, taken en verjaardagen van vandaag")+
+      (p.morning ? pushChoices("morningAt",[["07:00","7:00"],["07:30","7:30"],["08:00","8:00"],["09:00","9:00"]]) : '')+
+      pushToggle("bdays","Verjaardagen een week op voorhand","Zodat je op tijd een cadeau hebt")+
+      pushToggle("partner","Als "+partnerName()+" iets toevoegt","Afspraken, taken en verjaardagen voor jou of jullie samen")+
+      pushToggle("money","Als "+partnerName()+" een uitgave toevoegt","Met wat jij moet terugbetalen")+
+    '</section>'+
+    '<p class="hint">Meldingen kunnen tot 10 à 15 minuten later komen dan gepland. Deze keuzes gelden voor al je toestellen.</p>'+
+  '</div></div>';
 }
 
 /* ---------- Light / dark mode, remembered per account ---------- */
@@ -1075,6 +1194,9 @@ function renderMenu(){
       '<div class="swatch-row">'+BDAY_PRESETS.map(function(c){ var cb=(userBday||BDAY_PRESETS[0]).toLowerCase(); return '<button class="sw" style="background:'+c+'" data-act="bday" data-c="'+c+'" aria-label="Verjaardagen in '+c+'" aria-pressed="'+(cb===c)+'"></button>'; }).join("")+'</div>'+
       '<div class="own"><label class="own-pick" style="--pick:'+esc(userBday||BDAY_PRESETS[0])+'"><input type="color" id="bday-pick" value="'+esc(userBday||BDAY_PRESETS[0])+'" aria-label="Eigen kleur voor verjaardagen"><span>Eigen kleur</span></label>'+
         '<span class="bd-prev">'+ICON.cake+' Verjaardag</span>'+(userBday?'<button class="link" data-act="bday-reset">Standaard</button>':'')+'</div>'+
+    '</div>'+
+    '<div class="menu-sec"><h4>Meldingen</h4>'+
+      '<button class="menu-row" data-act="push-open">'+ICON.bell+'<span>Meldingen</span><em>'+(pushOnHere()?"Aan":"Uit")+'</em></button>'+
     '</div>'+
     '<div class="menu-sec"><h4>Koppelingen</h4>'+
       '<button class="menu-row" data-act="te-open">'+ICON.link+'<span>Koppelingen</span><em>'+linked+'/4</em></button>'+
@@ -1170,7 +1292,7 @@ function write(id, body){
     });
 }
 function clean(it){ var b={}; for(var k in it){ if(k!=="id" && it[k]!==undefined) b[k]=it[k]; } return b; }
-function unsub(){ if(stopSnap){ stopSnap(); stopSnap=null; } if(typeof stopExpenses==="function") stopExpenses(); if(typeof stopTimeEdit==="function") stopTimeEdit(); if(typeof stopTimerData==="function") stopTimerData(); }
+function unsub(){ if(stopSnap){ stopSnap(); stopSnap=null; } if(typeof stopExpenses==="function") stopExpenses(); if(typeof stopTimeEdit==="function") stopTimeEdit(); if(typeof stopTimerData==="function") stopTimerData(); if(typeof stopPushData==="function") stopPushData(); }
 function doLogin(){
   loginErr="";
   var p=new firebase.auth.GoogleAuthProvider();
@@ -1193,7 +1315,7 @@ function start(){
     unsub();
     if(!user){ authState="out"; S.items=[]; render(); return; }
     authState="in"; userEmail=user.email||""; userName=cap(((user.displayName||user.email||"").split(/[\s@._]/)[0]||"").toLowerCase()); canWrite=true; loadState="Je kalender wordt geladen…"; render();
-    startExpenses(); startTE(); loadTheme(user); startTimerData(user);
+    startExpenses(); startTE(); loadTheme(user); startTimerData(user); startPush(user);
     var t=setTimeout(function(){ loadState = S.items.length ? "Offline: je ziet de laatst opgeslagen versie." : "De kalender is nu niet bereikbaar. Controleer je verbinding."; render(); },10000);
     stopSnap=col.onSnapshot({includeMetadataChanges:true}, function(snap){
       S.items=snap.docs.map(function(doc){ var o=Object.assign({}, doc.data()); o.id=doc.id; return o; }); S.ver=(S.ver||0)+1;
@@ -1543,6 +1665,11 @@ document.addEventListener("click",function(e){
     case "te-color": readTEForm(); setTEColor(t.dataset.k, t.dataset.c, true); render(); break;
     case "lk-tab": readTEForm(); ui.ssheet.tab=t.dataset.w; ui.err=""; render(); break;
     case "te-open": ui.menu=false; ui.ssheet={}; ui.err=""; render(); break;
+    case "push-open": ui.menu=false; ui.ssheet={kind:"push"}; PUSH.err=""; render(); break;
+    case "push-on": registerPush(false); break;
+    case "push-off": unregisterPush(); break;
+    case "push-test": pushTest(); break;
+    case "pp": { var pk=t.dataset.k, pv=t.dataset.v; setPushPref(pk, pv==="true"?true:pv==="false"?false:/^\d+$/.test(pv)?+pv:pv); } break;
     case "te-edit": readTEForm(); ui.ssheet[t.dataset.k]=""; render(); var f=document.getElementById("lk-"+t.dataset.k); if(f) f.focus(); break;
     case "te-remove": readTEForm(); ui.ssheet[t.dataset.k]=""; ui.ssheet["rm_"+t.dataset.k]=true; render(); break;
     case "tab": ui.tab=t.dataset.tab; ui.sheet=null; ui.msheet=null; ui.tsheet=null; saveUI(); render(); window.scrollTo(0,0); break;
