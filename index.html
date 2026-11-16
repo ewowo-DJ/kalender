@@ -378,11 +378,11 @@ button{cursor:pointer}
 html.lockpage,html.lockpage body{height:100%;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;width:100%}
 html.lockpage #root{height:100%;overflow:hidden}
 .tg-scroll{overscroll-behavior:contain;touch-action:pan-x pan-y}
-.tg-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:0;background:transparent;padding:8px 2px;text-align:left;color:inherit;font:inherit}
-.tg-row span{display:flex;flex-direction:column;gap:2px}.tg-row b{font-weight:600;font-size:15px}.tg-row small{font-size:13px;color:var(--muted)}
-.tg{flex:none;width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;transition:background .15s}
-.tg::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
-.tg-row[aria-checked="true"] .tg{background:var(--accent)}.tg-row[aria-checked="true"] .tg::after{transform:translateX(18px)}
+.tgl-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:0;background:transparent;padding:8px 2px;text-align:left;color:inherit;font:inherit}
+.tgl-row span{display:flex;flex-direction:column;gap:2px}.tgl-row b{font-weight:600;font-size:15px}.tgl-row small{font-size:13px;color:var(--muted)}
+.tgl{flex:none;width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;transition:background .15s}
+.tgl::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+.tgl-row[aria-checked="true"] .tgl{background:var(--accent)}.tgl-row[aria-checked="true"] .tgl::after{transform:translateX(18px)}
 .pp-ch{margin:-2px 0 6px}.pp-ch button{flex:1;white-space:nowrap;padding:7px 2px;font-size:14px}
 .push-dev .primary{width:100%;height:46px;border:0;border-radius:12px;background:var(--accent);color:var(--on-accent,#fff);font-weight:600;font-size:15px}.push-dev .primary:disabled{opacity:.6}
 .lk-sec{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:14px;padding:12px}
@@ -1082,7 +1082,7 @@ function pushTest(){
 }
 function pushToggle(k, label, sub){
   var on=!!pushPrefs()[k];
-  return '<button type="button" class="tg-row" data-act="pp" data-k="'+k+'" data-v="'+(!on)+'" role="switch" aria-checked="'+on+'"><span><b>'+label+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</span><i class="tg" aria-hidden="true"></i></button>';
+  return '<button type="button" class="tgl-row" data-act="pp" data-k="'+k+'" data-v="'+(!on)+'" role="switch" aria-checked="'+on+'"><span><b>'+label+'</b>'+(sub?'<small>'+sub+'</small>':'')+'</span><i class="tgl" aria-hidden="true"></i></button>';
 }
 function pushChoices(k, opts){
   var cur=String(pushPrefs()[k]);

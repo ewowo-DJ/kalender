@@ -16,3 +16,6 @@ A shared calendar for Ewoud and Helen, with events (time and location), tasks, a
 | `firestore.rules` | Paste into Firebase → Firestore Database → Rules |
 | GitHub → Settings → Secrets and variables → Actions | `TIMEEDIT_URL` (Ewoud's .ics link), `TIMEEDIT_URL_HELEN` (Helen's .ics link) and `FIREBASE_SERVICE_ACCOUNT` (the full contents of the service-account key file) |
 | Firebase → Authentication → Settings → Authorized domains | Add `<username>.github.io` |
+
+## For developers
+Class names starting with `tg-` (and `.tg`) belong to the week/day time grid. Use other names for new components.
