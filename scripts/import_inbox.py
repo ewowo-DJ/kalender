@@ -7,7 +7,7 @@ and writes the items to Firestore. What was imported is remembered in
 settings/inbox, so deleting an item in the app never brings it back.
 
 File format after decryption (JSON):
-  {"items": [ {"id": "cl-…", "type": "event"|"task"|"birthday", "who": "ewoud"|"helen"|"both",
+  {"items": [ {"id": "cl-…", "type": "event"|"task"|"exam"|"birthday", "who": "ewoud"|"helen"|"both",
                "title": "…", "date": "YYYY-MM-DD", "start": "HH:MM", "end": "HH:MM",
                "location": "…", "notes": "…", "color": "#rrggbb", "repeat": "weekly", "until": "YYYY-MM-DD"} ],
    "delete": ["cl-…"]}
@@ -41,7 +41,7 @@ def clean(it):
     if not ID.match(str(it.get("id", ""))):
         raise ValueError("bad id")
     typ = it.get("type", "event")
-    if typ not in ("event", "task", "birthday"):
+    if typ not in ("event", "task", "exam", "birthday"):
         raise ValueError("bad type")
     who = it.get("who", "both")
     if who not in ("ewoud", "helen", "both"):
@@ -59,10 +59,12 @@ def clean(it):
         v = str(it.get(k, "") or "")
         if v and not TIME.match(v):
             raise ValueError(f"bad {k}")
-        if k == "start" or typ == "event":
+        if k == "start" or typ in ("event", "exam"):
             body[k] = v
-    if typ == "event":
+    if typ in ("event", "exam"):
         body["location"] = str(it.get("location", "")).strip()[:200]
+    if typ == "exam":
+        return body
     color = str(it.get("color", "") or "")
     if re.match(r"^#[0-9a-fA-F]{6}$", color) or color in ("blue", "green", "rose", "violet", "teal"):
         body["color"] = color

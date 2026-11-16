@@ -170,7 +170,7 @@ def run(db, now, dry=False):
         if p.get("events"):
             lead = timedelta(minutes=int(p.get("before") or 30))
             for i in items:
-                if i.get("type") not in ("event", "task") or not for_person(i, person):
+                if i.get("type") not in ("event", "task", "exam") or not for_person(i, person):
                     continue
                 if i.get("source") == "timeedit" and not p.get("lessons"):
                     continue
@@ -188,6 +188,8 @@ def run(db, now, dry=False):
                     body = when + (f" · {i['location']}" if i.get("location") else "")
                     if i.get("type") == "task":
                         body = "Taak · " + body
+                    elif i.get("type") == "exam":
+                        body = "Examen · " + body
                     once(f"ev:{u['uid']}:{i['id']}:{d}:{i.get('start')}",
                          lambda i=i, body=body: out.send(u, f"{i.get('start')} {i.get('title', '')}", body, f"ev-{i['id']}"))
 
@@ -204,7 +206,7 @@ def run(db, now, dry=False):
                 else:
                     lessons = []
                 bdays = [i for i in todays if i.get("type") in ("birthday", "anniversary")]
-                events = sorted([i for i in todays if i.get("type") == "event"], key=lambda i: i.get("start") or "")
+                events = sorted([i for i in todays if i.get("type") in ("event", "exam")], key=lambda i: i.get("start") or "")
                 tasks = [i for i in todays if i.get("type") == "task" and not task_done(i, today)]
                 if not (bdays or events or tasks or lessons):
                     return
@@ -212,7 +214,8 @@ def run(db, now, dry=False):
                 for b in bdays:
                     lines.append(("🎉 " if b.get("type") == "anniversary" else "🎂 Jarig: ") + bday_label(b, today))
                 for e in events:
-                    lines.append((e.get("start") + " " if e.get("start") else "") + e.get("title", ""))
+                    label = ("📝 Examen " if e.get("type") == "exam" else "") + e.get("title", "")
+                    lines.append((e.get("start") + " " if e.get("start") else "") + label)
                 if lessons:
                     lines.append(f"{len(lessons)} les" + ("sen" if len(lessons) > 1 else "") + f", eerste om {min(l.get('start') or '' for l in lessons)}")
                 for t in tasks:
@@ -237,6 +240,16 @@ def run(db, now, dry=False):
                         title, body = "Over een week jarig: " + bday_label(i, ahead), f"Op {nice(ahead)}. Tijd voor een cadeau?"
                     once(f"bd7:{u['uid']}:{i['id']}:{ahead}", lambda title=title, body=body, i=i: out.send(u, title, body, f"bd-{i['id']}"))
 
+        # Exams: a week ahead and the day before (sent with the morning slot).
+        if in_slot and p.get("exams", True):
+            for ahead_days, word in ((7, "Over een week"), (1, "Morgen")):
+                ahead = today + timedelta(days=ahead_days)
+                for i in items:
+                    if i.get("type") == "exam" and for_person(i, person) and occurs_on(i, ahead):
+                        title = f"{word}: examen {i.get('title', '')}"
+                        body = nice(ahead) + (f" om {i['start']}" if i.get("start") else "") + (f" · {i['location']}" if i.get("location") else "")
+                        once(f"ex{ahead_days}:{u['uid']}:{i['id']}:{ahead}", lambda title=title, body=body, i=i: out.send(u, title, body, f"ex-{i['id']}"))
+
         # 3. The other person added something.
         if not first_run and p.get("partner"):
             for iid, i in own_items.items():
@@ -246,7 +259,7 @@ def run(db, now, dry=False):
                 if not by or by.lower() == u["name"].lower():
                     continue
                 d = parse_day(i.get("date"))
-                kind = {"task": "een taak", "birthday": "een verjaardag"}.get(i.get("type"), "een afspraak")
+                kind = {"task": "een taak", "birthday": "een verjaardag", "exam": "een examen"}.get(i.get("type"), "een afspraak")
                 body = i.get("title", "")
                 if i.get("type") == "birthday" and d:
                     body = f"{body} · {d.day} {MONTHS[d.month - 1]}"

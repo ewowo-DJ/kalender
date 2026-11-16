@@ -17,7 +17,7 @@
 /* Layout: one column, month grid on top, the chosen day's agenda below, a floating Add button. */
 :root{
   --bg:#f3f4f8; --surface:#ffffff; --ink:#161a2b; --muted:#5f6680; --line:#dde0ea;
-  --accent:#3552d4; --accent-soft:#e6eafc; --task:#b5700a; --task-soft:#fbf0dc; --danger:#c3324f; --bday:#d9467a; --bday-soft:#fbe4ec; --ew:#16707f; --ew-soft:#dcf0f2; --he:#b8457a; --he-soft:#f8e1ec;
+  --accent:#3552d4; --accent-soft:#e6eafc; --task:#b5700a; --task-soft:#fbf0dc; --danger:#c3324f; --exam:#c2410c; --exam-soft:#fde8dc; --bday:#d9467a; --bday-soft:#fbe4ec; --ew:#16707f; --ew-soft:#dcf0f2; --he:#b8457a; --he-soft:#f8e1ec;
   --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
   --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   color-scheme:light;
@@ -25,13 +25,13 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#0f111a; --surface:#181b27; --ink:#e8eaf3; --muted:#9aa1b9; --line:#2a2f42;
-    --accent:#8197ff; --accent-soft:#232a4d; --task:#f0b44c; --task-soft:#3a2d14; --danger:#ff7a93; --bday:#ff86ad; --bday-soft:#4a1f30; --ew:#6fd0de; --ew-soft:#173b42; --he:#f59cc4; --he-soft:#4a2236;
+    --accent:#8197ff; --accent-soft:#232a4d; --task:#f0b44c; --task-soft:#3a2d14; --danger:#ff7a93; --exam:#ff9a5c; --exam-soft:#3d2414; --bday:#ff86ad; --bday-soft:#4a1f30; --ew:#6fd0de; --ew-soft:#173b42; --he:#f59cc4; --he-soft:#4a2236;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0f111a; --surface:#181b27; --ink:#e8eaf3; --muted:#9aa1b9; --line:#2a2f42;
-  --accent:#8197ff; --accent-soft:#232a4d; --task:#f0b44c; --task-soft:#3a2d14; --danger:#ff7a93; --bday:#ff86ad; --bday-soft:#4a1f30; --ew:#6fd0de; --ew-soft:#173b42; --he:#f59cc4; --he-soft:#4a2236;
+  --accent:#8197ff; --accent-soft:#232a4d; --task:#f0b44c; --task-soft:#3a2d14; --danger:#ff7a93; --exam:#ff9a5c; --exam-soft:#3d2414; --bday:#ff86ad; --bday-soft:#4a1f30; --ew:#6fd0de; --ew-soft:#173b42; --he:#f59cc4; --he-soft:#4a2236;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -390,6 +390,15 @@ html.lockpage #root{height:100%;overflow:hidden}
 .lk-sec h4{margin:0;display:flex;align-items:center;gap:8px;font-size:15px}
 .lk-sec h4 svg{width:18px;height:18px;color:var(--accent)}
 .who-pick small{font-weight:500;opacity:.7;margin-left:4px}
+.cake.ex{background:var(--exam-soft);color:var(--exam)}
+.item.exam{border-color:color-mix(in srgb,var(--exam) 40%,var(--line));background:color-mix(in srgb,var(--exam) 6%,var(--surface))}
+.tag.ex{color:var(--exam);background:var(--exam-soft)}
+.meta b.left{color:var(--exam)}
+.exams{display:flex;gap:12px;align-items:flex-start;background:color-mix(in srgb,var(--exam) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--exam) 35%,var(--line));border-radius:12px;padding:10px 12px;font-size:14px}
+.exams>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.exams b{color:var(--exam);font-size:13px}
+.exams em{font-style:normal;font-weight:700}
+.excap{display:inline-grid;vertical-align:-2px;margin-right:4px}.excap svg{width:13px;height:13px}
 .title-row{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .who{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .who-ewoud{background:var(--ew-soft);color:var(--ew)}
@@ -503,6 +512,7 @@ var ICON = {
   logout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>',
   link:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
   repeat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/></svg>',
+  cap:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 9 12 4 2 9l10 5 10-5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5M22 9v6"/></svg>',
   cake:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21h16M5 21v-7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v7"/><path d="M5 16c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 4.5 0"/><path d="M12 12V8M12 4.5c.6.8.6 1.6 0 2.2-.6-.6-.6-1.4 0-2.2z"/></svg>',
   tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -568,7 +578,7 @@ function renderMonth(){
     var s=iso(d), its=itemsOn(s), marks="";
     if(isDesk()){
       its.slice(0,4).forEach(function(i){
-        marks += '<span class="mchip'+(i.type==="task"?" task":"")+(i.done?" done":"")+dual(i).cls+'" style="--c:'+evColor(i)+dual(i).css+'">'+(i.start?'<b>'+esc(i.start)+'</b> ':'')+(i.type==="anniversary"?'<i class="hrt">'+ICON.heart+'</i> ':'')+esc(yearly(i)?bdayTitle(i):i.title)+'</span>';
+        marks += '<span class="mchip'+(i.type==="task"?" task":"")+(i.done?" done":"")+dual(i).cls+'" style="--c:'+evColor(i)+dual(i).css+'">'+(i.start?'<b>'+esc(i.start)+'</b> ':'')+(i.type==="anniversary"?'<i class="hrt">'+ICON.heart+'</i> ':'')+esc(yearly(i)?bdayTitle(i):itemTitle(i))+'</span>';
       });
       if(its.length>4) marks+='<span class="more">+'+(its.length-4)+' meer</span>';
     } else
@@ -583,6 +593,17 @@ function renderMonth(){
 }
 
 function renderItem(i){
+  if(i.type==="exam"){
+    var left=examLeft(i.date);
+    return '<div class="item exam" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0">'+
+      '<span class="cake ex">'+ICON.cap+'</span>'+
+      '<div class="body"><div class="title-row"><span class="tag ex">Examen'+(i.start?' · '+esc(i.start)+(i.end?'–'+esc(i.end):''):'')+'</span>'+chip(i.who)+'</div>'+
+      '<div class="title">'+esc(i.title)+'</div>'+
+      '<div class="meta"><b class="left">'+left+'</b>'+(i.location?' · '+esc(i.location):'')+'</div>'+
+      (i.notes?'<div class="meta">'+ICON.note+'<span>'+esc(i.notes)+'</span></div>':'')+
+      (byLine(i)?'<div class="meta"><span class="src">'+esc(byLine(i))+'</span></div>':'')+
+    '</div></div>';
+  }
   if(i.type==="anniversary"){
     return '<div class="item bday anniv"><span class="cake">'+ICON.heart+'</span>'+
       '<div class="body"><div class="title-row"><div class="title">'+esc(bdayTitle(i))+'</div>'+chip(i.who)+'</div>'+
@@ -696,7 +717,7 @@ document.addEventListener("change",function(e){
 });
 
 function renderSheet(){
-  var it=ui.sheet, kind=it.type, isEv=kind==="event", isB=kind==="birthday";
+  var it=ui.sheet, kind=it.type, isEx=kind==="exam", isEv=kind==="event"||isEx, isB=kind==="birthday";
   var curC = it.color ? (COLORS[it.color]||it.color) : (isEv?COLORS.blue:"#b5700a");
   var sw=Object.keys(COLORS).map(function(c){
     return '<button type="button" style="background:'+COLORS[c]+'" aria-label="'+c+'" aria-pressed="'+(it.color===c)+'" data-act="color" data-color="'+c+'"></button>';
@@ -708,28 +729,29 @@ function renderSheet(){
       '<button type="button" data-act="rep" data-rep="" aria-pressed="'+(it.repeat!=="weekly")+'">Niet</button>'+
       '<button type="button" data-act="rep" data-rep="weekly" aria-pressed="'+(it.repeat==="weekly")+'">Elke week</button></div></div>'+
     (it.repeat==="weekly" ? dateField("f-until","Herhalen tot en met (optioneel)", it.until||"", it._untilRaw)+'<p class="hint">Leeg laten = blijft elke week terugkomen. Wijzigen of verwijderen geldt voor alle weken.</p>' : '');
-  var NAMES={event:["Nieuwe afspraak","Afspraak wijzigen","Afspraak toevoegen"], task:["Nieuwe taak","Taak wijzigen","Taak toevoegen"], birthday:["Nieuwe verjaardag","Verjaardag wijzigen","Verjaardag toevoegen"]}[kind];
-  var kinds=[["event","Afspraak"],["task","Taak"],["birthday","Verjaardag"]];
+  var NAMES={event:["Nieuwe afspraak","Afspraak wijzigen","Afspraak toevoegen"], task:["Nieuwe taak","Taak wijzigen","Taak toevoegen"], birthday:["Nieuwe verjaardag","Verjaardag wijzigen","Verjaardag toevoegen"], exam:["Nieuw examen","Examen wijzigen","Examen toevoegen"]}[kind];
+  var kinds=[["event","Afspraak"],["task","Taak"],["exam","Examen"],["birthday","Verjaardag"]];
   return '<div class="scrim" data-act="scrim"><form class="sheet" id="sheet" novalidate>'+
     '<div class="sheet-h"><h3>'+(it.id?NAMES[1]:NAMES[0])+(it.id&&byLine(it)?'<small class="by">'+esc(byLine(it))+'</small>':'')+'</h3><button type="button" class="icon-btn" data-act="close" aria-label="Sluiten">'+ICON.close+'</button></div>'+
     (it.id?'':'<div class="tabs kinds" role="group" aria-label="Soort">'+kinds.map(function(k){ return '<button type="button" data-act="type" data-type="'+k[0]+'" aria-pressed="'+(kind===k[0])+'">'+k[1]+'</button>'; }).join("")+'</div>')+
     '<div class="field"><label id="l-who">'+(isB?"Voor wie is dit belangrijk?":"Voor wie?")+'</label><div class="tabs who-pick" role="radiogroup" aria-labelledby="l-who">'+
       ["ewoud","helen","both"].map(function(w){return '<button type="button" role="radio" class="wp-'+w+'" data-act="who" data-who="'+w+'" aria-checked="'+(it.who===w)+'" aria-pressed="'+(it.who===w)+'">'+PEOPLE[w].name+'</button>';}).join("")+
     '</div></div>'+
-    '<div class="field"><label for="f-title">'+(isB?"Naam":"Titel")+'</label><input id="f-title" value="'+esc(it.title)+'" placeholder="'+(isB?"bv. Mama":isEv?"bv. Lunch met Sam":"bv. De bank bellen")+'" autocomplete="off"></div>'+
+    '<div class="field"><label for="f-title">'+(isB?"Naam":isEx?"Vak":"Titel")+'</label><input id="f-title" value="'+esc(it.title)+'" placeholder="'+(isB?"bv. Mama":isEx?"bv. Marketingcommunicatie":isEv?"bv. Lunch met Sam":"bv. De bank bellen")+'" autocomplete="off"></div>'+
     dateField("f-date", isB?"Geboortedatum":"Datum", it.date, it._dateRaw)+
       (isB?'<label class="check-row"><input type="checkbox" id="f-yk"'+(it.yearKnown===false?" checked":"")+'> Geboortejaar onbekend (dan tonen we geen leeftijd)</label>':'')+
     (isEv?
       '<div class="row"><div class="field"><label for="f-start">Begin</label><input id="f-start" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(it.start)+'"></div><div class="field"><label for="f-end">Einde</label><input id="f-end" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(it.end)+'"></div></div>'+
-      '<div class="field"><label for="f-loc">Locatie</label><input id="f-loc" value="'+esc(it.location)+'" placeholder="Adres of plaats" autocomplete="off"></div>'+
-      colorField + repField
+      '<div class="field"><label for="f-loc">'+(isEx?"Lokaal":"Locatie")+'</label><input id="f-loc" value="'+esc(it.location)+'" placeholder="'+(isEx?"bv. GSCHB.2.005, Campus Schoonmeersen":"Adres of plaats")+'" autocomplete="off"></div>'+
+      (isEx ? '' : colorField + repField)
     : isB ? ''
     :
       '<div class="field"><label for="f-start">Tijd (optioneel)</label><input id="f-start" class="timef" type="text" inputmode="numeric" placeholder="uu:mm" maxlength="5" autocomplete="off" value="'+esc(it.start)+'"></div>'+
       colorField + repField
     )+
-    '<div class="field"><label for="f-notes">'+(isB?"Notities (bv. cadeau-ideeën)":"Notities")+'</label><textarea id="f-notes" placeholder="Optioneel">'+esc(it.notes)+'</textarea></div>'+
+    '<div class="field"><label for="f-notes">'+(isB?"Notities (bv. cadeau-ideeën)":isEx?"Leerstof en notities":"Notities")+'</label><textarea id="f-notes" placeholder="'+(isEx?"bv. Hoofdstuk 1–6, open boek, rekenmachine mee":"Optioneel")+'">'+esc(it.notes)+'</textarea></div>'+
     (isB?'<p class="hint">Komt elk jaar terug, en verschijnt een week op voorhand bij "Binnenkort jarig".</p>':'')+
+    (isEx?'<p class="hint">Examens verschijnen twee weken op voorhand bovenaan bij "Komende examens", met aftelling.</p>':'')+
     '<p class="err" role="alert">'+esc(ui.err)+'</p>'+
     '<div class="actions">'+(it.id?'<button type="button" class="del'+(ui.armed?" armed":"")+'" data-act="delete">'+(ui.armed?"Tik nogmaals om te verwijderen":"Verwijderen")+'</button>':'')+
     '<button type="submit" class="primary">'+(it.id?"Wijzigingen opslaan":NAMES[2])+'</button></div>'+
@@ -767,7 +789,10 @@ function teColor(w){ var c=(typeof TE!=="undefined"&&TE.colors)||{}; return c[w]
 /* Shared classes get both colours: returns the second colour, or "" */
 function evColor2(i){ if(i.source!=="timeedit"||i.who!=="both") return ""; var ce=teColor("ewoud"), ch=teColor("helen"); return ce===ch?"":ch; }
 function dual(i){ var c2=evColor2(i); return c2 ? {cls:" dual", css:";--c2:"+c2} : {cls:"", css:""}; }
+function examLeft(d){ var n=Math.round((parse(d)-parse(TODAY))/864e5); return n===0?"vandaag":n===1?"morgen":n<0?"voorbij":"nog "+n+" dagen"; }
+function itemTitle(i){ return i.type==="exam" ? "Examen "+i.title : i.title; }
 function evColor(i){
+  if(i.type==="exam") return "var(--exam)";
   if(i.source==="gcal") return gcColor(i.who);
   if(i.source==="timeedit"){
     var ce=teColor("ewoud"), ch=teColor("helen");
@@ -805,7 +830,7 @@ function renderTimeGrid(dates){
   var hours=(hi-lo)/60, height=hours*HP;
   var tcol=desk?64:44;
   var dayEvs=perDay.map(function(its){
-    var evs=its.filter(function(i){ return i.type==="event" && mins(i.start)!=null; }).map(function(i){
+    var evs=its.filter(function(i){ return (i.type==="event"||i.type==="exam") && mins(i.start)!=null; }).map(function(i){
       var s=mins(i.start), e=mins(i.end); if(e==null||e<=s) e=s+60; return {i:i,s:s,e:e};
     });
     layoutDay(evs); return evs;
@@ -829,7 +854,7 @@ function renderTimeGrid(dates){
         var te=i.source==="timeedit"||i.source==="gcal"||i.source==="fixed", task=i.type==="task";
         return '<div class="chip'+(task?" task":"")+(i.done?" done":"")+'" style="--c:'+evColor(i)+'"'+(te?'':' data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
           (task?'<button class="mini-check" role="checkbox" aria-checked="'+(!!i.done)+'" aria-label="Klaar" data-act="toggle" data-id="'+i.id+'" data-date="'+i.date+'">'+ICON.tick+'</button>':'')+
-          (yearly(i)?'<i class="ck">'+(i.type==="anniversary"?ICON.heart:ICON.cake)+'</i>':'')+'<span>'+(i.start&&task?esc(i.start)+' ':'')+esc(yearly(i)?bdayTitle(i):i.title)+'</span>'+(i.who&&i.who!=="both"?'<em class="dot-'+i.who+'" title="'+PEOPLE[i.who].name+'"></em>':'')+'</div>';
+          (yearly(i)?'<i class="ck">'+(i.type==="anniversary"?ICON.heart:ICON.cake)+'</i>':'')+'<span>'+(i.start&&task?esc(i.start)+' ':'')+esc(yearly(i)?bdayTitle(i):itemTitle(i))+'</span>'+(i.who&&i.who!=="both"?'<em class="dot-'+i.who+'" title="'+PEOPLE[i.who].name+'"></em>':'')+'</div>';
       }).join("")+'</div>';
     }).join("")+'</div>';
 
@@ -850,7 +875,7 @@ function renderTimeGrid(dates){
         return '<div class="blk'+(te?" te":"")+du.cls+(short?" short":"")+(ev.ncol>1&&dates.length>1?" narrow":"")+'" style="--c:'+evColor(i)+du.css+';top:'+top+'px;height:'+hgt+'px;left:calc('+left+'% + 2px);width:calc('+w+'% - 4px)"'+
           (te?' title="'+esc(i.title+(i.location?" · "+i.location:""))+'"':' title="'+esc(byLine(i))+'" data-act="edit" data-id="'+i.id+'" role="button" tabindex="0"')+'>'+
           '<div class="blk-c"><div class="blk-t"><span>'+esc(i.start)+(i.end?'<span class="end">–'+esc(i.end)+'</span>':'')+'</span>'+(i.who?'<em class="who who-'+i.who+'">'+PEOPLE[i.who].name+'</em>':'')+'</div>'+
-          '<div class="blk-n" lang="nl">'+esc(i.title)+'</div>'+
+          '<div class="blk-n" lang="nl">'+(i.type==="exam"?'<i class="excap">'+ICON.cap+'</i>':'')+esc(itemTitle(i))+'</div>'+
           (i.location&&!short?'<div class="blk-l" lang="nl">'+esc(i.location)+'</div>':'')+
         '</div></div>';
       }).join("");
@@ -905,6 +930,14 @@ setInterval(function(){
   var t=iso(new Date()); if(t!==TODAY){ if(ui.sel===TODAY) ui.sel=t; TODAY=t; ui.month=ui.sel.slice(0,7); }
   if(ui.tab==="cal" && /^(day|week)$/.test(ui.view)) render();
 }, 60000);
+function upcomingExams(){
+  var out=[];
+  for(var k=0;k<=14;k++){ var d=addDays(TODAY,k); itemsOn(d).forEach(function(i){ if(i.type==="exam") out.push(i); }); }
+  if(!out.length) return "";
+  return '<div class="exams"><span class="cake ex">'+ICON.cap+'</span><div><b>Komende examens</b>'+
+    out.slice(0,4).map(function(i){ var d=parse(i.date); return '<span><em>'+examLeft(i.date)+'</em> · '+esc(i.title)+' · '+DOW_SHORT[d.getDay()]+' '+d.getDate()+' '+MONTHS_SHORT[d.getMonth()]+(i.start?' '+esc(i.start):'')+(i.who!=="both"?' ('+PEOPLE[i.who].name+')':'')+'</span>'; }).join("")+
+    (out.length>4?'<span>+'+(out.length-4)+' meer</span>':'')+'</div></div>';
+}
 function upcomingBdays(){
   var out=[];
   for(var k=0;k<=7;k++){
@@ -1257,7 +1290,7 @@ function renderApp(){
       '<button class="cls-toggle" data-act="classes" aria-pressed="'+ui.classes+'" title="Lessen '+(ui.classes?"aan":"uit")+'">Lessen<span class="lg"> '+(ui.classes?"aan":"uit")+'</span></button>'+
     '</div></div>'+
     (loadState?'<div class="note"><span>'+esc(loadState)+'</span></div>':'')+
-    upcomingBdays()+
+    upcomingExams()+upcomingBdays()+
     body+
     (statusText?'<div class="status">'+esc(statusText)+'</div>':'')+
   '</div>'+
@@ -1599,7 +1632,7 @@ function readForm(){
   it.title=g("f-title"); var dd=readDate("f-date"); if(dd){ if(dd.iso) it.date=dd.iso; it._dateRaw=dd.raw; } var ts=normTime(g("f-start")); it.start=ts.v; it._timeErr=!ts.ok; it.notes=g("f-notes");
   if(it.type==="birthday"){ var yk=document.getElementById("f-yk"); if(yk) it.yearKnown=!yk.checked; }
   var un=readDate("f-until"); if(un){ it.until=un.iso||""; it._untilRaw=un.raw&&un.raw.length?un.raw:null; }
-  if(it.type==="event"){ var te2=normTime(g("f-end")); it.end=te2.v; it._timeErr=it._timeErr||!te2.ok; it.location=g("f-loc"); }
+  if(it.type==="event"||it.type==="exam"){ var te2=normTime(g("f-end")); it.end=te2.v; it._timeErr=it._timeErr||!te2.ok; it.location=g("f-loc"); }
 }
 function shift(n){
   if(ui.view==="day"){ ui.sel=addDays(ui.sel,n); ui.month=ui.sel.slice(0,7); render(); return; }
@@ -1715,7 +1748,8 @@ document.addEventListener("submit",function(e){
   if(it._untilRaw){ui.err="Vul de einddatum van de herhaling in als dd/mm/jjjj, of laat ze leeg."; render(); return;}
   delete it._untilRaw;
   delete it._dateRaw; delete it._timeErr;
-  if(it.type==="event"&&it.start&&it.end&&it.end<it.start){ui.err="Het einde ligt voor het begin."; render(); return;}
+  if((it.type==="event"||it.type==="exam")&&it.start&&it.end&&it.end<it.start){ui.err="Het einde ligt voor het begin."; render(); return;}
+  if(it.type==="exam"){ delete it.color; delete it.repeat; delete it.until; delete it.done; }
   if(it.type==="task"){delete it.end; delete it.location;}
   if(it.repeat!=="weekly"){ delete it.repeat; delete it.until; delete it.doneDates; }
   else if(it.until && it.until<it.date){ ui.err="De herhaling moet na de begindatum eindigen."; render(); return; }
